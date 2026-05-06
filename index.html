@@ -1038,7 +1038,12 @@ function submitBooking(){
 // ADMIN
 // ══════════════════════════════════════════════════════════════
 let adminLoggedIn=false;
-function openAdmin(){$('admin-overlay').classList.add('show');if(adminLoggedIn)showAdminContent()}
+function openAdmin(){
+  $('admin-overlay').classList.add('show');
+  if(adminLoggedIn){
+    showAdminContent(); // always re-render on open so state is fresh
+  }
+}
 function closeAdmin(){$('admin-overlay').classList.remove('show')}
 function adminLogin(){
   if($('admin-pw').value===ADMIN_PASSWORD){adminLoggedIn=true;$('admin-pw').value='';showAdminContent();}
@@ -1169,14 +1174,18 @@ function addBlackout(){
 function deleteBlackout(i){CFG.blackouts.splice(i,1);renderAdminBlackouts()}
 
 function saveConfig(){
-  // Save hours from form
   CFG.defaultHours={
     open:$('h-open').value,close:$('h-close').value,
     lunchStart:$('h-lunch-start').value,lunchEnd:$('h-lunch-end').value,
     lunchEnabled:$('h-lunch-enabled').checked
   };
-  $('save-confirm').classList.add('show');
+  // Re-render all admin lists so changes are reflected immediately
+  renderAdminShows();
+  renderAdminSeasons();
+  renderAdminBlackouts();
+  loadHoursForm();
   renderFormatGrid();
+  $('save-confirm').classList.add('show');
   setTimeout(()=>$('save-confirm').classList.remove('show'),3000);
 }
 
