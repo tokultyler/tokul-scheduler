@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book an Appointment — Tokul Creek Marketing</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--olive:#939b4f;--olive-dark:#757d3a;--olive-light:#b8c070;--olive-pale:#f0f2e6;--olive-faint:#f7f8f1;--navy:#1c1c2e;--charcoal:#2c2c2c;--mid:#555;--muted:#888;--border:#ddd;--border-light:#eee;--white:#fff;--offwhite:#f8f8f8;--red:#c0392b;--amber:#d4852a;--amber-light:#fdf3e3}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--charcoal);min-height:100vh;font-size:14px}
+.hero{background:var(--white);padding:30px 40px 26px;border-bottom:1px solid var(--border-light)}
+.hero h1{font-family:'Montserrat',sans-serif;color:var(--olive);font-size:1.65rem;font-weight:700;letter-spacing:-.01em}
+.hero p{color:var(--muted);font-size:.83rem;margin-top:5px;font-weight:300}
+.progress-wrap{background:var(--white);padding:0 40px;border-bottom:1px solid var(--border-light)}
+.progress-steps{display:flex;max-width:800px}
+.step-pill{display:flex;align-items:center;gap:7px;padding:12px 16px 12px 8px;font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--border);border-bottom:2px solid transparent;transition:all .22s}
+.step-pill.active{color:var(--olive);border-bottom-color:var(--olive)}
+.step-pill.done{color:var(--muted)}
+.step-num{width:18px;height:18px;border-radius:50%;background:var(--border-light);display:flex;align-items:center;justify-content:center;font-size:.63rem;font-weight:700;flex-shrink:0;transition:all .22s}
+.step-pill.active .step-num{background:var(--olive);color:white}
+.step-pill.done .step-num{background:var(--muted);color:white}
+.main{display:grid;grid-template-columns:1fr 278px;gap:22px;max-width:980px;margin:26px auto;padding:0 22px}
+.card{background:var(--white);border-radius:3px;padding:26px;box-shadow:0 1px 3px rgba(0,0,0,.07);border:1px solid var(--border-light)}
+.card h2{font-family:'Montserrat',sans-serif;font-size:1.05rem;font-weight:700;color:var(--olive);margin-bottom:4px;letter-spacing:-.01em}
+.card .subtitle{font-size:.78rem;color:var(--muted);margin-bottom:20px;font-weight:300}
+.step-panel{display:none}
+.step-panel.active{display:block;animation:fadeUp .22s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.format-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+.format-card{border:1.5px solid var(--border);border-radius:3px;padding:18px 13px;cursor:pointer;transition:all .16s;background:var(--white);text-align:center}
+.format-card:hover:not(.fc-disabled){border-color:var(--olive);background:var(--olive-faint)}
+.format-card.selected{border-color:var(--olive);background:var(--olive-pale)}
+.format-card.fc-disabled{opacity:.38;cursor:not-allowed}
+.fc-icon{font-size:1.65rem;margin-bottom:8px}
+.fc-name{font-family:'Montserrat',sans-serif;font-weight:700;font-size:.86rem;color:var(--charcoal)}
+.fc-desc{font-size:.7rem;color:var(--muted);margin-top:4px;font-weight:300;line-height:1.45}
+.fc-badge{display:inline-block;font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:2px;margin-top:7px;text-transform:uppercase;letter-spacing:.05em}
+.badge-open{background:#eaf0d8;color:var(--olive-dark)}
+.badge-seasonal{background:var(--amber-light);color:var(--amber)}
+.badge-closed{background:#fdecea;color:var(--red)}
+.show-grid{display:grid;gap:8px;margin-bottom:14px}
+.show-card{border:1.5px solid var(--border);border-radius:3px;padding:12px 14px;cursor:pointer;transition:all .16s;background:var(--white)}
+.show-card:hover{border-color:var(--olive);background:var(--olive-faint)}
+.show-card.selected{border-color:var(--olive);background:var(--olive-pale)}
+.show-name{font-family:'Montserrat',sans-serif;font-weight:700;font-size:.86rem;color:var(--charcoal)}
+.show-meta{font-size:.71rem;color:var(--muted);margin-top:2px}
+.show-reps{font-size:.69rem;color:var(--olive-dark);margin-top:4px;font-weight:700}
+.ts-section-label{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:7px}
+.tsl-num{width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;flex-shrink:0}
+.tsl-show .tsl-num{background:var(--amber);color:white}
+.tsl-rep .tsl-num{background:var(--olive);color:white}
+.ts-rep-section{margin-top:20px;padding-top:2px;display:none}
+.ts-rep-section.visible{display:block;animation:fadeUp .2s ease}
+.rep-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.rep-card{border:1.5px solid var(--border);border-radius:3px;padding:12px 13px;cursor:pointer;transition:all .16s;background:var(--white);text-align:left}
+.rep-card:hover{border-color:var(--olive);background:var(--olive-faint)}
+.rep-card.selected{border-color:var(--olive);background:var(--olive-pale)}
+.rep-name{font-family:'Montserrat',sans-serif;font-weight:700;font-size:.86rem;color:var(--charcoal)}
+.rep-territory{font-size:.7rem;color:var(--muted);margin-top:2px;font-weight:300}
+.rep-role{font-size:.65rem;color:var(--olive-dark);margin-top:4px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.builder-form{background:var(--olive-faint);border-radius:3px;padding:15px;border:1px solid #dde3c4}
+.builder-form h4{font-family:'Montserrat',sans-serif;font-size:.72rem;font-weight:700;color:var(--olive-dark);text-transform:uppercase;letter-spacing:.07em;margin-bottom:11px}
+.bf-row{display:grid;gap:10px;margin-bottom:4px}
+.bf-row.cols2{grid-template-columns:1fr 1fr}
+.bf-row.cols3{grid-template-columns:1fr 1fr 1fr}
+.bf-field{display:flex;flex-direction:column;gap:3px}
+.bf-field label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.bf-field select{padding:8px 10px;border:1.5px solid var(--border);border-radius:3px;font-family:'Open Sans',sans-serif;font-size:.81rem;background:white;color:var(--charcoal);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23939b4f'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.bf-field select:focus{outline:none;border-color:var(--olive)}
+.bf-field select:disabled{opacity:.38;background:#fafafa}
+.mini-cal-wrap{margin-top:14px;display:none}
+.mc-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:7px}
+.mc-nav-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.mc-nav{background:none;border:1.5px solid var(--border);border-radius:2px;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--charcoal);font-size:.84rem;transition:all .16s}
+.mc-nav:hover{border-color:var(--olive);color:var(--olive)}
+.mc-month{font-family:'Montserrat',sans-serif;font-size:.86rem;font-weight:700;color:var(--charcoal)}
+.mc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.mc-dlbl{text-align:center;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:2px 0 5px}
+.mc-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:.75rem;border-radius:2px;cursor:pointer;transition:all .12s;color:var(--charcoal);border:1.5px solid transparent;position:relative}
+.mc-day:hover:not(.mc-dis):not(.mc-emp):not(.mc-blk):not(.mc-ts-blk){background:var(--olive-pale);border-color:var(--olive-light)}
+.mc-day.mc-sel{background:var(--olive);color:white;font-weight:700}
+.mc-day.mc-today{border-color:var(--olive);font-weight:700;color:var(--olive-dark)}
+.mc-day.mc-dis{color:#ccc;cursor:not-allowed}
+.mc-day.mc-emp{cursor:default}
+.mc-day.mc-blk{background:#fdecea;color:var(--red);cursor:not-allowed;font-size:.68rem}
+.mc-day.mc-ts-blk{background:var(--amber-light);color:var(--amber);cursor:not-allowed;font-size:.68rem}
+.mc-day.mc-ts-blk::after,.mc-day.mc-blk::after{content:attr(data-tip);font-size:.47rem;position:absolute;bottom:1px;left:0;right:0;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 1px}
+.mc-day.mc-show{background:var(--amber-light);border-color:var(--amber);color:var(--amber);font-weight:700}
+.mc-day.mc-show.mc-sel{background:var(--olive);border-color:var(--olive);color:white}
+.tpick-wrap{margin-top:14px;display:none}
+.tp-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
+.tp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.tp-slot{padding:7px 3px;border:1.5px solid var(--border);border-radius:2px;text-align:center;font-size:.73rem;font-weight:500;cursor:pointer;transition:all .14s;background:var(--white);color:var(--charcoal);line-height:1.3}
+.tp-slot:hover:not(.tp-con):not(.tp-blk){border-color:var(--olive);background:var(--olive-faint)}
+.tp-slot.tp-sel{background:var(--olive);border-color:var(--olive);color:white;font-weight:600}
+.tp-slot.tp-con{background:#fdecea;border-color:#f5c6c2;color:#a0392b;cursor:not-allowed;font-size:.64rem}
+.tp-slot.tp-blk{background:var(--offwhite);border-color:var(--border-light);color:#bbb;cursor:not-allowed;text-decoration:line-through}
+.tp-slot.tp-stack{border-color:var(--olive-light)}
+.tp-note{display:block;font-size:.56rem;opacity:.82;margin-top:1px}
+.no-slots{font-size:.78rem;color:var(--muted);padding:12px 0;font-style:italic}
+.add-appt-btn{margin-top:13px;width:100%;padding:10px;background:var(--olive);color:white;border:none;border-radius:2px;font-family:'Montserrat',sans-serif;font-size:.76rem;font-weight:700;letter-spacing:.05em;cursor:pointer;transition:background .16s;text-transform:uppercase}
+.add-appt-btn:hover{background:var(--olive-dark)}
+.add-appt-btn:disabled{background:#c8c8c8;cursor:not-allowed}
+.appt-list{margin-top:17px;display:none}
+.appt-list-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.appt-list-ttl{font-family:'Montserrat',sans-serif;font-size:.74rem;font-weight:700;color:var(--charcoal);text-transform:uppercase;letter-spacing:.05em}
+.appt-badge{background:var(--olive);color:white;border-radius:2px;padding:2px 8px;font-size:.64rem;font-weight:700}
+.appt-item{display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--olive-faint);border-radius:2px;margin-bottom:5px;border:1px solid #dde3c4}
+.ai-icon{width:27px;height:27px;background:var(--olive);border-radius:2px;display:flex;align-items:center;justify-content:center;color:white;font-size:.78rem;flex-shrink:0}
+.ai-body{flex:1;min-width:0}
+.ai-brand{font-family:'Montserrat',sans-serif;font-size:.8rem;font-weight:700;color:var(--charcoal)}
+.ai-detail{font-size:.69rem;color:var(--muted);margin-top:1px}
+.ai-time{font-size:.7rem;font-weight:600;color:var(--olive-dark);white-space:nowrap;text-align:right;line-height:1.4}
+.ai-rm{cursor:pointer;color:#bbb;font-size:.95rem;line-height:1;transition:color .14s;flex-shrink:0;margin-left:3px}
+.ai-rm:hover{color:var(--red)}
+.add-another{display:flex;align-items:center;gap:7px;padding:10px 12px;border:1.5px dashed var(--border);border-radius:2px;cursor:pointer;color:var(--muted);font-size:.76rem;transition:all .16s;margin-top:2px}
+.add-another:hover{border-color:var(--olive);color:var(--olive)}
+.legend{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.li{display:flex;align-items:center;gap:6px;font-size:.65rem;color:var(--muted)}
+.ld{width:8px;height:8px;border-radius:1px;flex-shrink:0}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.ff{display:flex;flex-direction:column;gap:4px}
+.ff.full{grid-column:1/-1}
+.ff label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.ff input,.ff textarea{padding:9px 11px;border:1.5px solid var(--border);border-radius:2px;font-family:'Open Sans',sans-serif;font-size:.83rem;color:var(--charcoal);background:var(--white);transition:border-color .16s}
+.ff input:focus,.ff textarea:focus{outline:none;border-color:var(--olive)}
+.ff textarea{resize:vertical;min-height:70px}
+.req{color:var(--red)}
+.btn-row{display:flex;gap:10px;margin-top:20px}
+.btn-back{padding:10px 18px;border:1.5px solid var(--border);border-radius:2px;background:none;font-family:'Montserrat',sans-serif;font-size:.74rem;font-weight:700;letter-spacing:.04em;color:var(--muted);cursor:pointer;transition:all .16s;text-transform:uppercase}
+.btn-back:hover{border-color:var(--charcoal);color:var(--charcoal)}
+.btn-next{flex:1;padding:10px 18px;background:var(--olive);border:none;border-radius:2px;font-family:'Montserrat',sans-serif;font-size:.74rem;font-weight:700;letter-spacing:.05em;color:white;cursor:pointer;transition:background .16s;text-transform:uppercase}
+.btn-next:hover{background:var(--olive-dark)}
+.btn-next:disabled{background:#c8c8c8;cursor:not-allowed}
+.val-error{color:var(--red);font-size:.72rem;margin-top:6px;display:none}
+.val-error.show{display:block}
+.sidebar{display:flex;flex-direction:column;gap:13px}
+.sum-card{background:var(--offwhite);border-radius:3px;padding:17px;box-shadow:none;border:1px solid var(--border-light)}
+.sum-card h3{font-family:'Montserrat',sans-serif;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--charcoal);margin-bottom:11px;padding-bottom:7px;border-bottom:1px solid var(--border-light)}
+.sum-item{margin-bottom:9px}
+.sl{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:2px}
+.sv{font-size:.78rem;color:var(--charcoal);font-weight:500}
+.sv.empty{color:#bbb;font-weight:300;font-style:italic}
+.sum-appt{padding:5px 0;border-bottom:1px solid var(--border-light);font-size:.72rem}
+.sum-appt:last-child{border-bottom:none}
+.sa-brand{font-weight:700;color:var(--olive-dark)}
+.sa-detail{color:var(--muted);font-size:.67rem;margin-top:1px}
+.success-screen{display:none;text-align:center;padding:34px 14px;animation:fadeUp .3s ease}
+.success-screen.show{display:block}
+.suc-icon{width:52px;height:52px;background:var(--olive);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 15px;font-size:1.35rem}
+.success-screen h2{font-family:'Montserrat',sans-serif;font-size:1.2rem;font-weight:700;color:var(--charcoal);margin-bottom:8px}
+.success-screen p{color:var(--muted);font-size:.81rem;line-height:1.65}
+.suc-appts{margin:15px 0;text-align:left;background:var(--olive-faint);border-radius:3px;padding:13px;border:1px solid #dde3c4}
+.suc-appt{font-size:.78rem;padding:6px 0;border-bottom:1px solid #dde3c4}
+.suc-appt:last-child{border-bottom:none}
+#admin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.52);z-index:1000;align-items:center;justify-content:center}
+#admin-overlay.show{display:flex}
+.admin-modal{background:var(--white);border-radius:3px;width:min(880px,95vw);max-height:90vh;overflow-y:auto;box-shadow:0 6px 36px rgba(0,0,0,.22)}
+.admin-header{background:var(--navy);padding:15px 22px;border-radius:3px 3px 0 0;display:flex;align-items:center;justify-content:space-between}
+.admin-header h2{font-family:'Montserrat',sans-serif;color:white;font-size:.95rem;font-weight:700;letter-spacing:.01em}
+.admin-close{background:none;border:none;color:rgba(255,255,255,.45);font-size:1.25rem;cursor:pointer;line-height:1;transition:color .16s}
+.admin-close:hover{color:white}
+.admin-body{padding:20px}
+.admin-tabs{display:flex;gap:0;margin-bottom:18px;border-bottom:2px solid var(--border-light)}
+.admin-tab{padding:8px 15px;font-family:'Montserrat',sans-serif;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .16s}
+.admin-tab.active{color:var(--olive-dark);border-bottom-color:var(--olive)}
+.admin-pane{display:none}
+.admin-pane.active{display:block}
+.admin-section{margin-bottom:20px}
+.admin-section h3{font-family:'Montserrat',sans-serif;font-size:.72rem;font-weight:700;color:var(--charcoal);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border-light)}
+.admin-note{font-size:.74rem;color:var(--muted);margin-bottom:11px;line-height:1.55}
+.af-grid{display:grid;gap:9px;margin-bottom:7px}
+.af-grid.cols2{grid-template-columns:1fr 1fr}
+.af-grid.cols3{grid-template-columns:1fr 1fr 1fr}
+.af-field{display:flex;flex-direction:column;gap:3px}
+.af-field label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.af-field input,.af-field select{padding:8px 10px;border:1.5px solid var(--border);border-radius:2px;font-family:'Open Sans',sans-serif;font-size:.81rem;color:var(--charcoal);background:white}
+.af-field input:focus,.af-field select:focus{outline:none;border-color:var(--olive)}
+.rep-checkboxes{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.rep-cb{display:flex;align-items:center;gap:5px;font-size:.76rem;color:var(--charcoal);padding:5px 10px;border:1.5px solid var(--border);border-radius:2px;cursor:pointer;user-select:none;transition:all .16s}
+.rep-cb:hover{border-color:var(--olive)}
+.rep-cb input{cursor:pointer}
+.add-form{background:var(--olive-faint);border-radius:3px;padding:13px;border:1px solid #dde3c4;margin-top:9px}
+.add-form-title{font-family:'Montserrat',sans-serif;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--olive-dark);margin-bottom:9px}
+.add-row-btn{padding:7px 13px;background:var(--olive);color:white;border:none;border-radius:2px;font-family:'Montserrat',sans-serif;font-size:.71rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:background .16s;margin-top:8px}
+.add-row-btn:hover{background:var(--olive-dark)}
+.del-btn{padding:5px 10px;background:#fdecea;color:var(--red);border:1px solid #f5c6c2;border-radius:2px;font-size:.7rem;cursor:pointer;white-space:nowrap}
+.del-btn:hover{background:#fbd5d2}
+.save-btn{padding:10px 22px;background:var(--olive);color:white;border:none;border-radius:2px;font-family:'Montserrat',sans-serif;font-size:.76rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:background .16s;margin-top:14px}
+.save-btn:hover{background:var(--olive-dark)}
+.save-confirm{color:var(--olive-dark);font-size:.75rem;margin-left:12px;display:none;font-weight:700}
+.save-confirm.show{display:inline}
+.config-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--offwhite);border-radius:2px;margin-bottom:5px;border:1px solid var(--border-light)}
+.config-item-body{flex:1}
+.ci-title{font-family:'Montserrat',sans-serif;font-size:.81rem;font-weight:700;color:var(--charcoal)}
+.ci-detail{font-size:.7rem;color:var(--muted);margin-top:2px;line-height:1.5}
+.ci-reps{font-size:.68rem;color:var(--olive-dark);margin-top:3px;font-weight:700}
+.date-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px;min-height:18px}
+.date-chip{display:flex;align-items:center;gap:5px;background:var(--olive);color:white;border-radius:2px;padding:4px 9px 4px 11px;font-size:.72rem}
+.chip-rm{cursor:pointer;opacity:.55;transition:opacity .16s;font-size:.85rem;line-height:1}
+.chip-rm:hover{opacity:1}
+.hours-row{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--offwhite);border-radius:2px;margin-bottom:5px;border:1px solid var(--border-light);font-size:.79rem;flex-wrap:wrap}
+.hours-row .hr-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);min-width:68px}
+.hours-row input[type=time]{padding:5px 8px;border:1.5px solid var(--border);border-radius:2px;font-family:'Open Sans',sans-serif;font-size:.79rem;color:var(--charcoal)}
+.hours-row input[type=time]:focus{outline:none;border-color:var(--olive)}
+.sdh-row{display:flex;align-items:center;gap:10px;padding:7px 11px;background:var(--offwhite);border-radius:2px;margin-bottom:4px;border:1px solid var(--border-light);font-size:.78rem}
+.sdh-date{font-family:'Montserrat',sans-serif;font-weight:700;color:var(--charcoal);min-width:78px}
+.admin-login{padding:40px;text-align:center}
+.admin-login h3{font-family:'Montserrat',sans-serif;font-size:.95rem;font-weight:700;color:var(--charcoal);margin-bottom:16px}
+.admin-login input{padding:10px 14px;border:1.5px solid var(--border);border-radius:2px;font-family:'Open Sans',sans-serif;font-size:.86rem;width:220px;display:block;margin:0 auto 12px}
+.admin-login input:focus{outline:none;border-color:var(--olive)}
+.login-btn{padding:10px 26px;background:var(--olive);color:white;border:none;border-radius:2px;font-family:'Montserrat',sans-serif;font-size:.76rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
+.login-err{color:var(--red);font-size:.74rem;margin-top:8px;display:none}
+.login-err.show{display:block}
+@media(max-width:700px){
+  .main{grid-template-columns:1fr}.sidebar{display:none}.rep-grid{grid-template-columns:1fr}
+  .format-grid{grid-template-columns:1fr}.bf-row{grid-template-columns:1fr!important}
+  .tp-grid{grid-template-columns:repeat(3,1fr)}.hero,.progress-wrap,.header{padding-left:20px;padding-right:20px}
+  .af-grid{grid-template-columns:1fr!important}
+}
+</style>
+</head>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Book an Appointment</h1>
+  <p>Schedule a line review with your Tokul Creek rep</p>
+</div>
+<div class="progress-wrap">
+  <div class="progress-steps">
+    <div class="step-pill active" id="pill-1"><div class="step-num">1</div> Format</div>
+    <div class="step-pill" id="pill-2"><div class="step-num">2</div> Rep</div>
+    <div class="step-pill" id="pill-3"><div class="step-num">3</div> Appointments</div>
+    <div class="step-pill" id="pill-4"><div class="step-num">4</div> Your Info</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="card" id="main-card">
+
+    <!-- STEP 1 -->
+    <div class="step-panel active" id="step-1">
+      <h2>How would you like to meet?</h2>
+      <p class="subtitle">Choose the type of appointment that works for you</p>
+      <div class="format-grid" id="format-grid"></div>
+      <div class="val-error" id="err-format">Please select a format to continue.</div>
+      <div class="btn-row"><button class="btn-next" onclick="goStep(2)">Continue →</button></div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step-panel" id="step-2">
+      <h2>Select Your Rep</h2>
+      <p class="subtitle" id="rep-subtitle">Choose the Tokul Creek rep assigned to your account</p>
+      <div id="show-picker" style="display:none">
+        <div style="font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--bark);margin-bottom:10px">Select Trade Show</div>
+        <div class="show-grid" id="show-grid"></div>
+      </div>
+      <div id="rep-grid-wrap"><div class="rep-grid" id="rep-grid"></div></div>
+      <div class="val-error" id="err-rep">Please select a rep to continue.</div>
+      <div class="btn-row">
+        <button class="btn-back" onclick="goStep(1)">← Back</button>
+        <button class="btn-next" onclick="goStep(3)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step-panel" id="step-3">
+      <h2>Schedule Your Appointments</h2>
+      <p class="subtitle">Add each brand with its own date and time.</p>
+      <div class="builder-form" id="builder-form">
+        <h4>Add Appointment</h4>
+        <!-- Virtual: brand + duration only. Showroom/Trade: brand + category + duration -->
+        <div class="bf-row cols3" id="bf-full-row">
+          <div class="bf-field"><label>Brand</label>
+            <select id="b-brand" onchange="onBrand()">
+              <option value="">— Brand —</option>
+              <option>Chaco</option><option>Eagle Creek</option><option>Exped</option>
+              <option>Faction &amp; Phaenom</option><option>Merrell</option>
+              <option>Outdoor Research</option><option>Toad &amp; Co</option>
+              <option>Western Mountaineering</option>
+            </select>
+          </div>
+          <div class="bf-field" id="cat-field"><label>Category</label>
+            <select id="b-cat" onchange="onCat()" disabled><option value="">— Category —</option></select>
+          </div>
+          <div class="bf-field"><label>Duration</label>
+            <select id="b-dur" onchange="onDur()" disabled><option value="">— Duration —</option></select>
+          </div>
+        </div>
+        <div class="mini-cal-wrap" id="mcal">
+          <div class="mc-label">Select Date</div>
+          <div class="mc-nav-row">
+            <button class="mc-nav" onclick="mcNav(-1)">‹</button>
+            <div class="mc-month" id="mc-month"></div>
+            <button class="mc-nav" onclick="mcNav(1)">›</button>
+          </div>
+          <div class="mc-grid" id="mc-grid"></div>
+        </div>
+        <div class="tpick-wrap" id="tpick">
+          <div class="tp-label">Select Time — <span id="tp-date" style="color:var(--pine);font-weight:600"></span></div>
+          <div id="tp-tz-note" style="font-size:.72rem;color:var(--bark);margin-bottom:8px;display:flex;align-items:center;gap:5px">
+            <span style="font-size:.8rem">🕐</span>
+            <span id="tp-tz-text"></span>
+          </div>
+          <div class="tp-grid" id="tp-grid"></div>
+          <div class="legend">
+            <div class="li"><div class="ld" style="background:#e8f0e3;border:1.5px solid var(--sage)"></div> Available</div>
+            <div class="li"><div class="ld" style="background:#e8f0e3;border:1.5px solid var(--sage);position:relative"><span style="position:absolute;top:-1px;right:-1px;width:5px;height:5px;background:var(--moss);border-radius:50%"></span></div> Same brand — stacking OK</div>
+            <div class="li"><div class="ld" style="background:#fff3f0;border:1.5px solid #e8b4ad"></div> Blocked — different brand showing</div>
+            <div class="li"><div class="ld" style="background:#f5f0eb;border:1.5px solid var(--stone)"></div> Unavailable</div>
+          </div>
+        </div>
+        <button class="add-appt-btn" id="add-btn" onclick="commitAppt()" disabled>+ Add to Schedule</button>
+      </div>
+      <div class="appt-list" id="appt-list">
+        <div class="appt-list-hdr">
+          <span class="appt-list-ttl">Scheduled Appointments</span>
+          <span class="appt-badge" id="appt-count">0</span>
+        </div>
+        <div id="appt-items"></div>
+        <div class="add-another" onclick="startAnother()">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v6M5 8h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Add another brand
+        </div>
+      </div>
+      <div class="val-error" id="err-appts">Please add at least one appointment.</div>
+      <div class="btn-row">
+        <button class="btn-back" onclick="goStep(2)">← Back</button>
+        <button class="btn-next" onclick="goStep(4)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step-panel" id="step-4">
+      <h2>Your Information</h2>
+      <p class="subtitle">We'll send confirmation details to your email</p>
+      <div class="form-grid">
+        <div class="ff"><label>First Name <span class="req">*</span></label><input id="f-first" placeholder="Jane"></div>
+        <div class="ff"><label>Last Name <span class="req">*</span></label><input id="f-last" placeholder="Smith"></div>
+        <div class="ff"><label>Email <span class="req">*</span></label><input type="email" id="f-email" placeholder="jane@yourshop.com"></div>
+        <div class="ff"><label>Phone</label><input type="tel" id="f-phone" placeholder="(503) 555-0100"></div>
+        <div class="ff full"><label>Store / Account Name <span class="req">*</span></label><input id="f-store" placeholder="Mountain Outfitters — Portland"></div>
+        <div class="ff full"><label>Notes (optional)</label><textarea id="f-notes" placeholder="Anything your rep should know ahead of the meetings..."></textarea></div>
+      </div>
+      <div class="val-error" id="err-contact">Please fill in all required fields.</div>
+      <div class="btn-row">
+        <button class="btn-back" onclick="goStep(3)">← Back</button>
+        <button class="btn-next" onclick="submitBooking()">Confirm Booking ✓</button>
+      </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="success-screen" id="success-screen">
+      <div class="suc-icon">✓</div>
+      <h2>You're all booked!</h2>
+      <p>Confirmation sent to <strong id="conf-email"></strong>.<br>Your rep will receive a calendar invite for each appointment.</p>
+      <div class="suc-appts" id="suc-list"></div>
+      <p style="color:var(--bark);font-size:.77rem;margin-top:8px">Need to change anything? Reply to your confirmation email or contact your rep directly.</p>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sum-card">
+      <h3>Booking Summary</h3>
+      <div class="sum-item"><div class="sl">Format</div><div class="sv empty" id="sum-format">Not selected</div></div>
+      <div class="sum-item"><div class="sl">Rep</div><div class="sv empty" id="sum-rep">Not selected</div></div>
+      <div class="sum-item"><div class="sl">Appointments</div><div id="sum-appts"><div class="sv empty">None yet</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADMIN ══ -->
+<div id="admin-overlay">
+  <div class="admin-modal">
+    <div class="admin-header">
+      <h2>Admin Panel — Tokul Creek Marketing</h2>
+      <button class="admin-close" onclick="closeAdmin()">×</button>
+    </div>
+    <div id="admin-login-pane" class="admin-login">
+      <h3>Admin Access</h3>
+      <input type="password" id="admin-pw" placeholder="Password" onkeydown="if(event.key==='Enter')adminLogin()">
+      <button class="login-btn" onclick="adminLogin()">Sign In</button>
+      <div class="login-err" id="login-err">Incorrect password</div>
+    </div>
+    <div id="admin-content" style="display:none">
+      <div class="admin-body">
+        <div class="admin-tabs">
+          <div class="admin-tab active" onclick="adminTab(this,'trade-shows')">Trade Shows</div>
+          <div class="admin-tab" onclick="adminTab(this,'showroom')">Showroom</div>
+          <div class="admin-tab" onclick="adminTab(this,'hours')">Hours</div>
+          <div class="admin-tab" onclick="adminTab(this,'blackouts')">Blackouts</div>
+        </div>
+
+        <!-- TRADE SHOWS -->
+        <div class="admin-pane active" id="pane-trade-shows">
+          <div class="admin-section">
+            <h3>Upcoming Trade Shows</h3>
+            <p class="admin-note">Trade show dates automatically block showroom and virtual bookings. Each show can have different hours per day.</p>
+            <div id="show-list"></div>
+            <div class="add-form">
+              <div class="add-form-title">Add Trade Show</div>
+              <div class="af-grid cols2">
+                <div class="af-field"><label>Show Name</label><input id="ns-name" placeholder="WWSRA Bozeman"></div>
+                <div class="af-field"><label>Location</label><input id="ns-loc" placeholder="Gallatin County Fairgrounds"></div>
+              </div>
+              <div class="af-grid cols2" style="margin-top:8px">
+                <div class="af-field"><label>Start Date</label><input type="date" id="ns-start" onchange="updateShowDateHours()"></div>
+                <div class="af-field"><label>End Date</label><input type="date" id="ns-end" onchange="updateShowDateHours()"></div>
+              </div>
+              <div class="af-grid cols2" style="margin-top:8px">
+                <div class="af-field"><label>Timezone</label>
+                  <select id="ns-tz">
+                    <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                    <option value="America/Denver">Mountain Time (MT)</option>
+                    <option value="America/Chicago">Central Time (CT)</option>
+                    <option value="America/New_York">Eastern Time (ET)</option>
+                  </select>
+                </div>
+              </div>
+              <!-- Per-date hours -->
+              <div id="ns-date-hours" style="margin-top:10px;display:none">
+                <div style="font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--bark);margin-bottom:6px">Hours by Date</div>
+                <div id="ns-date-hours-rows"></div>
+              </div>
+              <div class="af-field" style="margin-top:10px"><label>Attending Reps</label>
+                <div class="rep-checkboxes" id="ns-reps">
+                  <label class="rep-cb"><input type="checkbox" value="paul"> Paul</label>
+                  <label class="rep-cb"><input type="checkbox" value="tyler"> Tyler</label>
+                  <label class="rep-cb"><input type="checkbox" value="pat"> Pat</label>
+                  <label class="rep-cb"><input type="checkbox" value="austin"> Austin</label>
+                </div>
+              </div>
+              <button class="add-row-btn" onclick="addShow()">+ Add Show</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SHOWROOM -->
+        <div class="admin-pane" id="pane-showroom">
+          <div class="admin-section">
+            <h3>Showroom Available Date Windows</h3>
+            <p class="admin-note">Showroom is always listed as an option, but only dates within these windows can be booked. Add windows ahead of time so retailers can book in advance. Outside configured windows, no showroom dates are selectable.</p>
+            <div id="season-list"></div>
+            <div class="add-form">
+              <div class="add-form-title">Add Availability Window</div>
+              <div class="af-grid cols3">
+                <div class="af-field"><label>Label</label><input id="nw-label" placeholder="Spring Preline 2026"></div>
+                <div class="af-field"><label>Start Date</label><input type="date" id="nw-start"></div>
+                <div class="af-field"><label>End Date</label><input type="date" id="nw-end"></div>
+              </div>
+              <button class="add-row-btn" onclick="addSeason()">+ Add Window</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- HOURS -->
+        <div class="admin-pane" id="pane-hours">
+          <div class="admin-section">
+            <h3>Default Availability Hours</h3>
+            <p class="admin-note">These hours apply to showroom and virtual appointments Monday–Friday. Trade shows use their own per-date hours.</p>
+            <div class="hours-row">
+              <span class="hr-label">Open</span>
+              <input type="time" id="h-open" value="09:00">
+              <span style="color:var(--bark);font-size:.8rem">to</span>
+              <input type="time" id="h-close" value="17:00">
+              <span style="color:var(--bark);font-size:.8rem">· 30-min slots</span>
+            </div>
+            <p style="font-size:.75rem;color:var(--bark);margin-top:8px">Lunch break (no bookings)</p>
+            <div class="hours-row" style="margin-top:6px">
+              <span class="hr-label">Lunch</span>
+              <input type="time" id="h-lunch-start" value="12:00">
+              <span style="color:var(--bark);font-size:.8rem">to</span>
+              <input type="time" id="h-lunch-end" value="13:00">
+              <label style="font-size:.78rem;color:var(--bark);display:flex;align-items:center;gap:5px;margin-left:8px">
+                <input type="checkbox" id="h-lunch-enabled" checked> Block lunch
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- BLACKOUTS -->
+        <div class="admin-pane" id="pane-blackouts">
+          <div class="admin-section">
+            <h3>Agency-Wide Blackout Dates</h3>
+            <p class="admin-note">No appointments of any type on these dates. Applies to all formats. Trade show dates are automatically blacked out for showroom and virtual — no need to add them here.</p>
+            <div class="date-chips" id="blackout-chips"></div>
+            <div class="add-form">
+              <div class="add-form-title">Add Blackout</div>
+              <div class="af-grid cols2">
+                <div class="af-field"><label>Start Date</label><input type="date" id="nb-start"></div>
+                <div class="af-field"><label>End Date <span style="font-weight:300;text-transform:none;font-size:.68rem">(same for single day)</span></label><input type="date" id="nb-end"></div>
+              </div>
+              <div class="af-grid cols2" style="margin-top:6px">
+                <div class="af-field"><label>Label (optional)</label><input id="nb-label" placeholder="Sample travel"></div>
+              </div>
+              <button class="add-row-btn" onclick="addBlackout()">+ Add Blackout</button>
+            </div>
+          </div>
+        </div>
+
+        <button class="save-btn" onclick="saveConfig()">Save Changes</button>
+        <span class="save-confirm" id="save-confirm">✓ Saved</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════
+let CFG = {
+  tradeShows: [
+    { id:'ts1', name:'WWSRA Bozeman', location:'Gallatin County Fairgrounds', timezone:'America/Denver',
+      dateHours:{'2026-05-26':{open:'13:00',close:'19:00'},'2026-05-27':{open:'08:00',close:'19:00'},'2026-05-28':{open:'08:00',close:'16:00'}},
+      reps:['paul','pat'] },
+    { id:'ts2', name:'WWSRA Tacoma', location:'Greater Tacoma Convention Center', timezone:'America/Los_Angeles',
+      dateHours:{'2026-06-01':{open:'08:00',close:'19:00'},'2026-06-02':{open:'08:00',close:'19:00'}},
+      reps:['paul','austin','tyler'] },
+  ],
+  showroomWindows: [
+    { id:'sw1', label:'Spring Preline 2026', start:'2026-05-01', end:'2026-06-30' },
+    { id:'sw2', label:'Fall/Winter Preline 2025-26', start:'2025-11-01', end:'2026-01-31' },
+  ],
+  defaultHours: { open:'09:00', close:'17:00', lunchStart:'12:00', lunchEnd:'13:00', lunchEnabled:true },
+  blackouts: [
+    { id:'b1', start:'2026-05-15', end:'2026-05-16', label:'Sample travel' },
+  ]
+};
+
+const ADMIN_PASSWORD = 'tokul2026';
+
+const BRANDS_FULL = {
+  'Chaco':                  {'Line Showing':[30,60]},
+  'Eagle Creek':            {'Bags':[30,60],'Accessories':[15,30],'Full Line':[30,60]},
+  'Exped':                  {'Line Showing':[30,60]},
+  'Faction & Phaenom':      {'Skis':[30],'Boots':[15,30],'Full Line':[30,60]},
+  'Merrell':                {'Line Showing':[30,60]},
+  'Outdoor Research':       {"Men's":[30,60],"Women's":[30,60],'Accessories':[30],'Full Line':[120]},
+  'Toad & Co':              {"Men's":[30],"Women's":[90],'Full Line':[120]},
+  'Western Mountaineering': {'Line Showing':[30,60]},
+};
+// Virtual: brand → duration only (no category)
+const BRANDS_VIRTUAL = Object.fromEntries(
+  Object.keys(BRANDS_FULL).map(b=>([b,[30,60]]))
+);
+
+const ALL_REPS = {
+  paul:  {name:'Paul Dukich',   territory:'Key Accounts',       role:'Owner / Principal',  timezone:'America/Los_Angeles'},
+  tyler: {name:'Tyler Noonan',  territory:'Oregon',             role:'Sales Rep',           timezone:'America/Los_Angeles'},
+  pat:   {name:'Pat Marrinan',  territory:'Montana · Alaska',   role:'Sales Rep',           timezone:'America/Denver'},
+  austin:{name:'Austin Piper',  territory:'Washington · Idaho', role:'Sales Rep',           timezone:'America/Los_Angeles'},
+};
+const SHOWROOM_REPS = ['paul','austin'];
+
+// Mock booked slots. Each slot stores objects: {brand, category}
+// 'FULL' string still means fully blocked regardless of brand/category.
+// Virtual bookings store category as 'Virtual' — conflict is brand-only.
+const BOOKED = {
+  paul:  {'2026-05-05':{
+    '09:00':[{brand:'Merrell',category:'Line Showing'}],
+    '10:00':[{brand:'Toad & Co',category:"Men's"}],
+    '14:00':['FULL']}},
+  tyler: {'2026-05-05':{
+    '09:30':[{brand:'Toad & Co',category:"Women's"}],
+    '13:00':[{brand:'Merrell',category:'Line Showing'}]}},
+  pat:   {'2026-05-27':{
+    '10:00':[{brand:'Western Mountaineering',category:'Line Showing'}],
+    '14:30':['FULL']}},
+  austin:{'2026-06-01':{
+    '09:00':[{brand:'Outdoor Research',category:"Men's"}],
+    '13:30':[{brand:'Toad & Co',category:"Men's"}]}},
+};
+
+const MONS_S=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONS_L=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// ── STATE ─────────────────────────────────────────────────────
+let format=null,selectedShow=null,rep=null,appointments=[],curStep=1;
+let calMonth=new Date(2026,4,1);
+let bBrand=null,bCat=null,bDur=null,bDate=null,bTime=null;
+
+// ── HELPERS ───────────────────────────────────────────────────
+const $=id=>document.getElementById(id);
+function ds(d){return d.toISOString().split('T')[0]}
+function toMins(t){const[h,m]=t.split(':');return parseInt(h)*60+parseInt(m)}
+function fmt(t){const[h,m]=t.split(':');const hr=parseInt(h);return(hr>12?hr-12:hr)+':'+m+' '+(hr>=12?'PM':'AM')}
+function overlaps(aS,aD,bS,bD){return toMins(aS)<toMins(bS)+bD&&toMins(aS)+aD>toMins(bS)}
+function pad2(n){return String(n).padStart(2,'0')}
+function addMins(t,mins){const total=toMins(t)+mins;return pad2(Math.floor(total/60))+':'+pad2(total%60)}
+function todayStr(){return ds(new Date())}
+
+// Generate 30-min slots between open and close, skipping lunch if enabled
+function genSlots(openT, closeT, lunchS, lunchE, lunchEnabled){
+  const slots=[];
+  let cur=openT;
+  while(toMins(cur)<toMins(closeT)){
+    const skip=lunchEnabled&&toMins(cur)>=toMins(lunchS)&&toMins(cur)<toMins(lunchE);
+    if(!skip)slots.push(cur);
+    cur=addMins(cur,30);
+  }
+  return slots;
+}
+
+function getSlotsForDate(dateStr){
+  // Trade show date: use show hours for that date
+  if(format==='trade-show'&&selectedShow){
+    const h=selectedShow.dateHours[dateStr];
+    if(h)return genSlots(h.open,h.close,CFG.defaultHours.lunchStart,CFG.defaultHours.lunchEnd,CFG.defaultHours.lunchEnabled);
+    return[];
+  }
+  const h=CFG.defaultHours;
+  return genSlots(h.open,h.close,h.lunchStart,h.lunchEnd,h.lunchEnabled);
+}
+
+function isBlackedOut(dateStr){
+  return CFG.blackouts.some(b=>dateStr>=b.start&&dateStr<=b.end);
+}
+function isTradeShowDate(dateStr){
+  return CFG.tradeShows.some(s=>Object.keys(s.dateHours).includes(dateStr));
+}
+function getTradeShowForDate(dateStr){
+  return CFG.tradeShows.find(s=>Object.keys(s.dateHours).includes(dateStr));
+}
+function isShowroomAvailable(dateStr){
+  // Not a trade show date, not blacked out, within a configured window
+  if(isTradeShowDate(dateStr)||isBlackedOut(dateStr))return false;
+  return CFG.showroomWindows.some(w=>dateStr>=w.start&&dateStr<=w.end);
+}
+function isVirtualAvailable(dateStr){
+  // Weekday, not blacked out, not a trade show date
+  const d=new Date(dateStr+'T12:00:00');
+  return d.getDay()!==0&&d.getDay()!==6&&!isBlackedOut(dateStr)&&!isTradeShowDate(dateStr);
+}
+
+// ── NAV ───────────────────────────────────────────────────────
+function goStep(n){
+  if(n>curStep){
+    if(curStep===1&&!format){$('err-format').classList.add('show');return}
+    if(curStep===2&&!rep){$('err-rep').classList.add('show');return}
+    if(curStep===3&&appointments.length===0){$('err-appts').classList.add('show');return}
+  }
+  document.querySelectorAll('.val-error').forEach(e=>e.classList.remove('show'));
+  document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
+  $('step-'+n).classList.add('active');
+  document.querySelectorAll('.step-pill').forEach((p,i)=>{
+    p.classList.remove('active','done');
+    if(i+1===n)p.classList.add('active');
+    if(i+1<n)p.classList.add('done');
+  });
+  curStep=n;
+  if(n===2)renderRepStep();
+  if(n===3)setupBuilderForFormat();
+}
+
+// ── STEP 1: FORMAT ────────────────────────────────────────────
+function renderFormatGrid(){
+  const today=todayStr();
+  const upcomingShows=CFG.tradeShows.filter(s=>Object.keys(s.dateHours).some(d=>d>=today));
+  const grid=$('format-grid'); grid.innerHTML='';
+  [
+    {id:'trade-show',icon:'🏔️',name:'Trade Show',desc:'Line showing at a regional trade show',
+     avail:upcomingShows.length>0,badge:upcomingShows.length>0?upcomingShows.length+' upcoming':'None scheduled',bc:upcomingShows.length>0?'badge-seasonal':'badge-closed'},
+    {id:'showroom',icon:'🏠',name:'Showroom',desc:'In-person visit to our North Bend showroom',
+     avail:true,badge:'Book ahead',bc:'badge-open'},
+    {id:'virtual',icon:'💻',name:'Virtual / Phone',desc:'Teams or phone — available year-round',
+     avail:true,badge:'Always available',bc:'badge-open'},
+  ].forEach(f=>{
+    const div=document.createElement('div');
+    div.className='format-card'+(f.avail?'':' fc-disabled');
+    div.innerHTML=`<div class="fc-icon">${f.icon}</div><div class="fc-name">${f.name}</div><div class="fc-desc">${f.desc}</div><span class="fc-badge ${f.bc}">${f.badge}</span>`;
+    if(f.avail)div.onclick=()=>{
+      document.querySelectorAll('.format-card').forEach(c=>c.classList.remove('selected'));
+      div.classList.add('selected'); format=f.id; selectedShow=null; rep=null;
+      $('sum-format').textContent=f.name; $('sum-format').classList.remove('empty');
+      $('err-format').classList.remove('show');
+    };
+    grid.appendChild(div);
+  });
+}
+
+// ── STEP 2: REP ───────────────────────────────────────────────
+function renderRepStep(){
+  const sp=$('show-picker'),rw=$('rep-grid-wrap');
+  sp.style.display='none'; rw.style.display='block'; $('rep-grid').innerHTML='';
+  if(format==='trade-show'){
+    const today=todayStr();
+    const shows=CFG.tradeShows.filter(s=>Object.keys(s.dateHours).some(d=>d>=today));
+    sp.style.display='block';
+    $('rep-subtitle').textContent='Select a trade show, then choose your rep';
+    const sg=$('show-grid'); sg.innerHTML='';
+
+    // Section 1 label
+    const lbl1=document.createElement('div');
+    lbl1.className='ts-section-label tsl-show';
+    lbl1.innerHTML='<span class="tsl-num">1</span> Select Trade Show';
+    sg.before(lbl1);
+
+    shows.forEach(show=>{
+      const dates=Object.keys(show.dateHours).sort();
+      const [sy,sm,sd]=dates[0].split('-'),[ey,em,ed]=dates[dates.length-1].split('-');
+      const dateRange=dates[0]===dates[dates.length-1]
+        ?MONS_S[parseInt(sm)-1]+' '+parseInt(sd)+', '+sy
+        :MONS_S[parseInt(sm)-1]+' '+parseInt(sd)+' – '+MONS_S[parseInt(em)-1]+' '+parseInt(ed)+', '+ey;
+      const repNames=show.reps.map(r=>ALL_REPS[r]?.name.split(' ')[0]).join(', ');
+      const div=document.createElement('div');
+      div.className='show-card'+(selectedShow?.id===show.id?' selected':'');
+      div.innerHTML=`<div class="show-name">${show.name}</div><div class="show-meta">${dateRange} · ${show.location}</div><div class="show-reps">Attending: ${repNames}</div>`;
+      div.onclick=()=>{
+        document.querySelectorAll('.show-card').forEach(c=>c.classList.remove('selected'));
+        div.classList.add('selected'); selectedShow=show; rep=null;
+        const repSec=document.getElementById('ts-rep-section');
+        repSec.classList.add('visible');
+        renderRepCards(show.reps);
+      };
+      sg.appendChild(div);
+    });
+
+    // Section 2 label + rep grid — injected after show grid
+    rw.id='ts-rep-section';
+    rw.className='ts-rep-section'+(selectedShow?' visible':'');
+    const lbl2=document.createElement('div');
+    lbl2.className='ts-section-label tsl-rep';
+    lbl2.innerHTML='<span class="tsl-num">2</span> Select Your Rep';
+    rw.insertBefore(lbl2, rw.firstChild);
+
+    if(selectedShow)renderRepCards(selectedShow.reps);
+    else $('rep-grid').innerHTML='';
+  } else if(format==='showroom'){
+    rw.id='rep-grid-wrap'; rw.className='';
+    // Remove any injected section label from prior trade show render
+    rw.querySelector('.ts-section-label')?.remove();
+    $('rep-subtitle').textContent='Showroom appointments are with Paul or Austin';
+    renderRepCards(SHOWROOM_REPS);
+  } else {
+    rw.id='rep-grid-wrap'; rw.className='';
+    rw.querySelector('.ts-section-label')?.remove();
+    $('rep-subtitle').textContent='Choose the Tokul Creek rep assigned to your account';
+    renderRepCards(Object.keys(ALL_REPS));
+  }
+}
+function renderRepCards(ids){
+  const g=$('rep-grid'); g.innerHTML='';
+  ids.forEach(id=>{
+    const r=ALL_REPS[id]; if(!r)return;
+    const div=document.createElement('div');
+    div.className='rep-card'+(rep===id?' selected':'');
+    div.innerHTML=`<div class="rep-name">${r.name}</div><div class="rep-territory">${r.territory}</div><div class="rep-role">${r.role}</div>`;
+    div.onclick=()=>{
+      document.querySelectorAll('.rep-card').forEach(c=>c.classList.remove('selected'));
+      div.classList.add('selected'); rep=id;
+      $('sum-rep').textContent=r.name; $('sum-rep').classList.remove('empty');
+      $('err-rep').classList.remove('show');
+    };
+    g.appendChild(div);
+  });
+}
+
+// ── STEP 3: BUILDER ───────────────────────────────────────────
+function setupBuilderForFormat(){
+  const isVirtual=format==='virtual';
+  const catField=$('cat-field');
+  // Virtual hides category, shows brand + duration only in 2 cols
+  catField.style.display=isVirtual?'none':'';
+  $('bf-full-row').className='bf-row '+(isVirtual?'cols2':'cols3');
+  resetBuilder();
+}
+
+function onBrand(){
+  bBrand=$('b-brand').value||null; bCat=null; bDur=null; bDate=null; bTime=null;
+  const cs=$('b-cat'),ds2=$('b-dur');
+  cs.innerHTML='<option value="">— Category —</option>'; ds2.innerHTML='<option value="">— Duration —</option>';
+  cs.disabled=true; ds2.disabled=true;
+  $('mcal').style.display='none'; $('tpick').style.display='none'; $('add-btn').disabled=true;
+  if(!bBrand)return;
+  const isVirtual=format==='virtual';
+  if(isVirtual){
+    // Skip category — go straight to duration (30 or 60)
+    [30,60].forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d+' min';ds2.appendChild(o)});
+    ds2.disabled=false;
+  } else {
+    const cats=Object.keys(BRANDS_FULL[bBrand]);
+    cats.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;cs.appendChild(o)});
+    cs.disabled=false;
+    if(cats.length===1){cs.value=cats[0];onCat();}
+  }
+}
+function onCat(){
+  bCat=$('b-cat').value||null; bDur=null; bDate=null; bTime=null;
+  const ds2=$('b-dur'); ds2.innerHTML='<option value="">— Duration —</option>'; ds2.disabled=true;
+  $('mcal').style.display='none'; $('tpick').style.display='none'; $('add-btn').disabled=true;
+  if(!bCat)return;
+  const durs=BRANDS_FULL[bBrand][bCat];
+  durs.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d+' min';ds2.appendChild(o)});
+  ds2.disabled=false;
+  if(durs.length===1){ds2.value=durs[0];onDur();}
+}
+function onDur(){
+  bDur=$('b-dur').value?parseInt($('b-dur').value):null; bDate=null; bTime=null;
+  $('tpick').style.display='none'; $('add-btn').disabled=true;
+  if(!bDur){$('mcal').style.display='none';return}
+  $('mcal').style.display='block'; renderMCal();
+}
+
+// ── CALENDAR ──────────────────────────────────────────────────
+function mcNav(d){calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+d,1);renderMCal()}
+function renderMCal(){
+  const m=calMonth,grid=$('mc-grid'),today=new Date();
+  $('mc-month').textContent=MONS_L[m.getMonth()]+' '+m.getFullYear();
+  grid.innerHTML='';
+  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>{const e=document.createElement('div');e.className='mc-dlbl';e.textContent=d;grid.appendChild(e)});
+  const fd=new Date(m.getFullYear(),m.getMonth(),1).getDay();
+  const dim=new Date(m.getFullYear(),m.getMonth()+1,0).getDate();
+  for(let i=0;i<fd;i++){const e=document.createElement('div');e.className='mc-day mc-emp';grid.appendChild(e)}
+  for(let d=1;d<=dim;d++){
+    const e=document.createElement('div');e.className='mc-day';e.textContent=d;
+    const dateObj=new Date(m.getFullYear(),m.getMonth(),d),dateStr=ds(dateObj);
+    const isWE=dateObj.getDay()===0||dateObj.getDay()===6;
+    const isPast=dateObj<new Date(today.getFullYear(),today.getMonth(),today.getDate());
+    const blacked=isBlackedOut(dateStr);
+    const isTSDate=isTradeShowDate(dateStr);
+    const tsShow=isTSDate?getTradeShowForDate(dateStr):null;
+
+    // Require at least 7 days notice — no same-day or within-a-week bookings
+    const minDate=new Date(today.getFullYear(),today.getMonth(),today.getDate()+7);
+    const tooSoon=dateObj<minDate;
+
+    if(tooSoon){e.classList.add('mc-dis')}
+    else if(blacked){
+      e.classList.add('mc-blk');
+      const bl=CFG.blackouts.find(b=>dateStr>=b.start&&dateStr<=b.end);
+      e.setAttribute('data-tip',bl?.label||'Closed'); e.title=bl?.label||'Closed';
+    } else if(format==='trade-show'){
+      // Only show dates for selected show
+      if(selectedShow&&selectedShow.dateHours[dateStr]){
+        e.classList.add('mc-show');
+        const h=selectedShow.dateHours[dateStr];
+        e.title=selectedShow.name+': '+fmt(h.open)+'–'+fmt(h.close);
+        if(bDate===dateStr)e.classList.add('mc-sel');
+        e.onclick=()=>pickDate(dateStr,e);
+      } else {e.classList.add('mc-dis')}
+    } else if(format==='showroom'){
+      if(isWE||isTSDate){
+        e.classList.add(isTSDate?'mc-ts-blk':'mc-dis');
+        if(isTSDate){e.setAttribute('data-tip',tsShow?.name||'Show');e.title=tsShow?.name+' — showroom closed'}
+      } else if(!isShowroomAvailable(dateStr)){
+        e.classList.add('mc-dis');
+      } else {
+        if(dateStr===ds(today))e.classList.add('mc-today');
+        if(bDate===dateStr)e.classList.add('mc-sel');
+        e.onclick=()=>pickDate(dateStr,e);
+      }
+    } else {
+      // Virtual
+      if(isWE||isTSDate){
+        e.classList.add(isTSDate?'mc-ts-blk':'mc-dis');
+        if(isTSDate){e.setAttribute('data-tip',tsShow?.name||'Show');e.title=tsShow?.name+' — team at trade show'}
+      } else {
+        if(dateStr===ds(today))e.classList.add('mc-today');
+        if(bDate===dateStr)e.classList.add('mc-sel');
+        e.onclick=()=>pickDate(dateStr,e);
+      }
+    }
+    grid.appendChild(e);
+  }
+}
+
+// Returns the IANA timezone and friendly label for the current booking context
+function getEventTimezone(){
+  if(format==='trade-show'&&selectedShow?.timezone){
+    const tz=selectedShow.timezone;
+    return{tz, label: tz==='America/Denver'?'Mountain Time (MT)':tz==='America/Los_Angeles'?'Pacific Time (PT)':'Local Time'};
+  }
+  const tz=ALL_REPS[rep]?.timezone||'America/Los_Angeles';
+  return{tz, label: tz==='America/Denver'?'Mountain Time (MT)':'Pacific Time (PT)'};
+}
+
+function pickDate(dateStr,el){
+  document.querySelectorAll('.mc-day').forEach(d=>d.classList.remove('mc-sel'));
+  el.classList.add('mc-sel'); bDate=dateStr; bTime=null; $('add-btn').disabled=true;
+  const[y,mo,d]=dateStr.split('-');
+  $('tp-date').textContent=MONS_S[parseInt(mo)-1]+' '+parseInt(d)+', '+y;
+  const{label}=getEventTimezone();
+  $('tp-tz-text').textContent='Times shown in '+label;
+  renderTimePicker(dateStr); $('tpick').style.display='block';
+}
+
+// ── TIME PICKER ───────────────────────────────────────────────
+// Conflict key: brand+category for showroom/trade-show, brand-only for virtual
+function conflictKey(brand, category){
+  return format==='virtual' ? brand : brand+'||'+category;
+}
+function currentKey(){ return conflictKey(bBrand, bCat); }
+
+function renderTimePicker(dateStr){
+  const grid=$('tp-grid'); grid.innerHTML='';
+  const slots=getSlotsForDate(dateStr);
+  if(slots.length===0){
+    grid.innerHTML='<div class="no-slots">No available slots for this date.</div>'; return;
+  }
+  const repBooked=((BOOKED[rep]||{})[dateStr])||{};
+  const myKey=currentKey();
+
+  slots.forEach(t=>{
+    const el=document.createElement('div'); el.className='tp-slot';
+    const existing=repBooked[t]||[];
+    const isFull=existing.includes('FULL');
+
+    let realConflictLabel=null, realIsStack=false;
+    if(!isFull){
+      for(const[bt,entries] of Object.entries(repBooked)){
+        if(entries.includes('FULL'))continue;
+        if(overlaps(t,bDur,bt,30)){
+          for(const e of entries){
+            const eKey=conflictKey(e.brand, e.category);
+            if(eKey!==myKey){
+              // Different brand or same brand different category — conflict
+              realConflictLabel = e.brand===bBrand
+                ? e.brand+' '+e.category  // same brand, diff cat: show category
+                : e.brand;                // diff brand: show brand name
+              break;
+            } else {
+              realIsStack=true;           // exact same brand+category — stack OK
+            }
+          }
+        }
+        if(realConflictLabel)break;
+      }
+    }
+
+    let sessConflictLabel=null, sessIsStack=false;
+    for(const a of appointments){
+      if(a.date!==dateStr)continue;
+      if(overlaps(t,bDur,a.time,a.duration)){
+        const aKey=conflictKey(a.brand, a.category);
+        if(aKey!==myKey){
+          sessConflictLabel = a.brand===bBrand
+            ? a.brand+' '+a.category
+            : a.brand;
+          break;
+        } else {
+          sessIsStack=true;
+        }
+      }
+    }
+
+    const isConflict=!!realConflictLabel||!!sessConflictLabel;
+    const conflictLabel=realConflictLabel||sessConflictLabel;
+    const isStacking=!isFull&&!isConflict&&(realIsStack||sessIsStack);
+
+    if(isFull){
+      el.classList.add('tp-blk');
+      el.innerHTML=fmt(t)+'<span class="tp-note">Unavailable</span>';
+    } else if(isConflict){
+      el.classList.add('tp-con');
+      el.innerHTML=fmt(t)+'<span class="tp-note">'+conflictLabel+' showing</span>';
+    } else {
+      if(isStacking)el.classList.add('tp-stack');
+      if(bTime===t)el.classList.add('tp-sel');
+      el.innerHTML=fmt(t)+(isStacking?'<span class="tp-note" style="color:var(--moss)">+ stacking</span>':'');
+      el.onclick=()=>pickTime(t,el);
+    }
+    grid.appendChild(el);
+  });
+}
+function pickTime(t,el){
+  document.querySelectorAll('.tp-slot').forEach(s=>s.classList.remove('tp-sel'));
+  el.classList.add('tp-sel'); bTime=t; $('add-btn').disabled=false; $('err-appts').classList.remove('show');
+}
+
+// ── COMMIT ────────────────────────────────────────────────────
+function commitAppt(){
+  // Virtual has no category selection — store 'Virtual' as category
+  // but conflict logic uses brand-only key for virtual so this is just for display
+  const cat = format==='virtual' ? 'Virtual' : bCat;
+  appointments.push({brand:bBrand, category:cat, duration:bDur, date:bDate, time:bTime, format});
+  renderApptList(); updateSummary(); resetBuilder();
+}
+function resetBuilder(){
+  bBrand=null;bCat=null;bDur=null;bDate=null;bTime=null;
+  $('b-brand').value='';
+  $('b-cat').innerHTML='<option value="">— Category —</option>';$('b-cat').disabled=true;
+  $('b-dur').innerHTML='<option value="">— Duration —</option>';$('b-dur').disabled=true;
+  $('mcal').style.display='none';$('tpick').style.display='none';$('add-btn').disabled=true;
+}
+function startAnother(){$('builder-form').scrollIntoView({behavior:'smooth',block:'nearest'});resetBuilder()}
+function removeAppt(idx){
+  appointments.splice(idx,1);renderApptList();updateSummary();
+  if(appointments.length===0)$('appt-list').style.display='none';
+}
+function renderApptList(){
+  const list=$('appt-list'),items=$('appt-items');
+  if(appointments.length===0){list.style.display='none';return}
+  list.style.display='block';$('appt-count').textContent=appointments.length;
+  const sorted=[...appointments].map((a,i)=>({...a,idx:i})).sort((a,b)=>a.date!==b.date?(a.date<b.date?-1:1):(a.time<b.time?-1:1));
+  items.innerHTML='';
+  sorted.forEach(a=>{
+    const[y,mo,d]=a.date.split('-');
+    const div=document.createElement('div');div.className='appt-item';
+    div.innerHTML=`<div class="ai-icon">📋</div><div class="ai-body"><div class="ai-brand">${a.brand}</div><div class="ai-detail">${a.category} · ${a.duration} min</div></div><div class="ai-time">${MONS_S[parseInt(mo)-1]} ${parseInt(d)}, ${y}<br>${fmt(a.time)}</div><div class="ai-rm" onclick="removeAppt(${a.idx})">×</div>`;
+    items.appendChild(div);
+  });
+}
+function updateSummary(){
+  const el=$('sum-appts');
+  if(appointments.length===0){el.innerHTML='<div class="sv empty">None yet</div>';return}
+  const sorted=[...appointments].sort((a,b)=>a.date!==b.date?(a.date<b.date?-1:1):(a.time<b.time?-1:1));
+  el.innerHTML=sorted.map(a=>{
+    const[y,mo,d]=a.date.split('-');
+    return`<div class="sum-appt"><div class="sa-brand">${a.brand}</div><div class="sa-detail">${a.category} · ${a.duration}min · ${MONS_S[parseInt(mo)-1]} ${parseInt(d)} ${fmt(a.time)}</div></div>`;
+  }).join('');
+}
+
+// ── SUBMIT ────────────────────────────────────────────────────
+function submitBooking(){
+  const first=$('f-first').value.trim(),last=$('f-last').value.trim();
+  const email=$('f-email').value.trim(),store=$('f-store').value.trim();
+  if(!first||!last||!email||!store){$('err-contact').classList.add('show');return}
+  document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
+  $('success-screen').classList.add('show');
+  document.querySelectorAll('.step-pill').forEach(p=>{p.classList.remove('active');p.classList.add('done')});
+  $('conf-email').textContent=email;
+  const listEl=$('suc-list');
+  const fmtLabel=format==='trade-show'?'Trade Show — '+(selectedShow?.name||''):format==='showroom'?'Showroom':'Virtual / Phone';
+  listEl.innerHTML=`<div style="font-size:.71rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--bark);margin-bottom:8px">With ${ALL_REPS[rep]?.name} · ${fmtLabel}</div>`;
+  [...appointments].sort((a,b)=>a.date!==b.date?(a.date<b.date?-1:1):(a.time<b.time?-1:1)).forEach(a=>{
+    const[y,mo,d]=a.date.split('-');
+    const item=document.createElement('div');item.className='suc-appt';
+    item.innerHTML=`<strong style="color:var(--pine)">${a.brand}</strong> — ${a.category} <span style="color:var(--bark)">(${a.duration} min)</span><br><span style="font-size:.72rem;color:var(--bark)">${MONS_L[parseInt(mo)-1]} ${parseInt(d)}, ${y} at ${fmt(a.time)}</span>`;
+    listEl.appendChild(item);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════════════════════════════
+let adminLoggedIn=false;
+function openAdmin(){$('admin-overlay').classList.add('show');if(adminLoggedIn)showAdminContent()}
+function closeAdmin(){$('admin-overlay').classList.remove('show')}
+function adminLogin(){
+  if($('admin-pw').value===ADMIN_PASSWORD){adminLoggedIn=true;$('admin-pw').value='';showAdminContent();}
+  else $('login-err').classList.add('show');
+}
+function showAdminContent(){
+  $('admin-login-pane').style.display='none';$('admin-content').style.display='block';
+  renderAdminShows();renderAdminSeasons();renderAdminBlackouts();loadHoursForm();
+}
+function adminTab(el,name){
+  document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.admin-pane').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');$('pane-'+name).classList.add('active');
+}
+
+// ── Trade Shows ───────────────────────────────────────────────
+function updateShowDateHours(){
+  const start=$('ns-start').value,end=$('ns-end').value;
+  const wrap=$('ns-date-hours'),rows=$('ns-date-hours-rows');
+  if(!start||!end||start>end){wrap.style.display='none';return}
+  wrap.style.display='block'; rows.innerHTML='';
+  let cur=new Date(start+'T12:00:00');
+  const endDate=new Date(end+'T12:00:00');
+  while(cur<=endDate){
+    const d=ds(cur);
+    const[y,mo,day]=d.split('-');
+    const row=document.createElement('div');row.className='sdh-row';
+    row.innerHTML=`<span class="sdh-date">${MONS_S[parseInt(mo)-1]} ${parseInt(day)}</span>
+      <span style="font-size:.72rem;color:var(--bark)">Open</span>
+      <input type="time" id="sh-open-${d}" value="09:00" style="padding:4px 7px;border:1.5px solid var(--stone);border-radius:5px;font-size:.8rem;font-family:'DM Sans',sans-serif">
+      <span style="font-size:.72rem;color:var(--bark)">Close</span>
+      <input type="time" id="sh-close-${d}" value="17:00" style="padding:4px 7px;border:1.5px solid var(--stone);border-radius:5px;font-size:.8rem;font-family:'DM Sans',sans-serif">`;
+    rows.appendChild(row);
+    cur.setDate(cur.getDate()+1);
+  }
+}
+function renderAdminShows(){
+  const list=$('show-list'); list.innerHTML='';
+  if(CFG.tradeShows.length===0){list.innerHTML='<p style="font-size:.78rem;color:var(--bark)">No trade shows configured.</p>';return}
+  CFG.tradeShows.forEach((show,i)=>{
+    const dates=Object.keys(show.dateHours).sort();
+    const [sy,sm,sd]=dates[0].split('-'),[ey,em,ed]=dates[dates.length-1].split('-');
+    const dateRange=dates[0]===dates[dates.length-1]
+      ?MONS_S[parseInt(sm)-1]+' '+parseInt(sd)+', '+sy
+      :MONS_S[parseInt(sm)-1]+' '+parseInt(sd)+' – '+MONS_S[parseInt(em)-1]+' '+parseInt(ed)+', '+ey;
+    const repNames=show.reps.map(r=>ALL_REPS[r]?.name.split(' ')[0]).join(', ');
+    const hoursStr=Object.entries(show.dateHours).sort().map(([d,h])=>{
+      const[,mo,day]=d.split('-');
+      return MONS_S[parseInt(mo)-1]+' '+parseInt(day)+': '+fmt(h.open)+'–'+fmt(h.close);
+    }).join(' · ');
+    const tzLabel=show.timezone==='America/Denver'?'Mountain Time':show.timezone==='America/Los_Angeles'?'Pacific Time':show.timezone||'';
+    const div=document.createElement('div');div.className='config-item';
+    div.innerHTML=`<div class="config-item-body"><div class="ci-title">${show.name}</div><div class="ci-detail">${dateRange} · ${show.location} · ${tzLabel}</div><div class="ci-detail" style="margin-top:3px">${hoursStr}</div><div class="ci-reps">Attending: ${repNames}</div></div><button class="del-btn" onclick="deleteShow(${i})">Remove</button>`;
+    list.appendChild(div);
+  });
+}
+function addShow(){
+  const name=$('ns-name').value.trim(),loc=$('ns-loc').value.trim();
+  const start=$('ns-start').value,end=$('ns-end').value;
+  const timezone=$('ns-tz').value;
+  const reps=[...$('ns-reps').querySelectorAll('input:checked')].map(c=>c.value);
+  if(!name||!start||!end||reps.length===0){alert('Please fill in all fields and select at least one rep.');return}
+  const dateHours={};
+  let cur=new Date(start+'T12:00:00');
+  const endDate=new Date(end+'T12:00:00');
+  while(cur<=endDate){
+    const d=ds(cur);
+    dateHours[d]={open:$('sh-open-'+d)?.value||'09:00',close:$('sh-close-'+d)?.value||'17:00'};
+    cur.setDate(cur.getDate()+1);
+  }
+  CFG.tradeShows.push({id:'ts'+Date.now(),name,location:loc,timezone,dateHours,reps});
+  $('ns-name').value='';$('ns-loc').value='';$('ns-start').value='';$('ns-end').value='';
+  $('ns-date-hours').style.display='none';$('ns-date-hours-rows').innerHTML='';
+  $('ns-reps').querySelectorAll('input').forEach(c=>c.checked=false);
+  renderAdminShows();renderFormatGrid();
+}
+function deleteShow(i){CFG.tradeShows.splice(i,1);renderAdminShows();renderFormatGrid()}
+
+// ── Showroom Windows ──────────────────────────────────────────
+function renderAdminSeasons(){
+  const list=$('season-list');list.innerHTML='';
+  if(CFG.showroomWindows.length===0){list.innerHTML='<p style="font-size:.78rem;color:var(--bark)">No windows configured.</p>';return}
+  CFG.showroomWindows.forEach((w,i)=>{
+    const[sy,sm,sd]=w.start.split('-'),[ey,em,ed]=w.end.split('-');
+    const div=document.createElement('div');div.className='config-item';
+    div.innerHTML=`<div class="config-item-body"><div class="ci-title">${w.label}</div><div class="ci-detail">${MONS_S[parseInt(sm)-1]} ${parseInt(sd)}, ${sy} → ${MONS_S[parseInt(em)-1]} ${parseInt(ed)}, ${ey}</div></div><button class="del-btn" onclick="deleteSeason(${i})">Remove</button>`;
+    list.appendChild(div);
+  });
+}
+function addSeason(){
+  const label=$('nw-label').value.trim(),start=$('nw-start').value,end=$('nw-end').value;
+  if(!label||!start||!end){alert('Please fill in all fields.');return}
+  CFG.showroomWindows.push({id:'sw'+Date.now(),label,start,end});
+  $('nw-label').value='';$('nw-start').value='';$('nw-end').value='';
+  renderAdminSeasons();
+}
+function deleteSeason(i){CFG.showroomWindows.splice(i,1);renderAdminSeasons()}
+
+// ── Hours ─────────────────────────────────────────────────────
+function loadHoursForm(){
+  const h=CFG.defaultHours;
+  $('h-open').value=h.open;$('h-close').value=h.close;
+  $('h-lunch-start').value=h.lunchStart;$('h-lunch-end').value=h.lunchEnd;
+  $('h-lunch-enabled').checked=h.lunchEnabled;
+}
+
+// ── Blackouts ─────────────────────────────────────────────────
+function renderAdminBlackouts(){
+  const chips=$('blackout-chips');chips.innerHTML='';
+  [...CFG.blackouts].sort((a,b)=>a.start<b.start?-1:1).forEach((b,i)=>{
+    const[sy,sm,sd]=b.start.split('-');
+    let label=MONS_S[parseInt(sm)-1]+' '+parseInt(sd);
+    if(b.start!==b.end){const[ey,em,ed]=b.end.split('-');label+=' – '+MONS_S[parseInt(em)-1]+' '+parseInt(ed);}
+    label+=', '+sy+(b.label?' · '+b.label:'');
+    const chip=document.createElement('div');chip.className='date-chip';
+    chip.innerHTML=`${label}<span class="chip-rm" onclick="deleteBlackout(${i})">×</span>`;
+    chips.appendChild(chip);
+  });
+}
+function addBlackout(){
+  const start=$('nb-start').value,end=$('nb-end').value||start,label=$('nb-label').value.trim();
+  if(!start){alert('Please select a start date.');return}
+  if(end<start){alert('End date must be on or after start date.');return}
+  CFG.blackouts.push({id:'b'+Date.now(),start,end,label});
+  $('nb-start').value='';$('nb-end').value='';$('nb-label').value='';
+  renderAdminBlackouts();
+}
+function deleteBlackout(i){CFG.blackouts.splice(i,1);renderAdminBlackouts()}
+
+function saveConfig(){
+  // Save hours from form
+  CFG.defaultHours={
+    open:$('h-open').value,close:$('h-close').value,
+    lunchStart:$('h-lunch-start').value,lunchEnd:$('h-lunch-end').value,
+    lunchEnabled:$('h-lunch-enabled').checked
+  };
+  $('save-confirm').classList.add('show');
+  renderFormatGrid();
+  setTimeout(()=>$('save-confirm').classList.remove('show'),3000);
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+renderFormatGrid();
+
+// URL param admin trigger: ?admin opens admin panel automatically
+if(new URLSearchParams(window.location.search).has('admin')){
+  openAdmin();
+}
+</script>
+</body>
+</html>
