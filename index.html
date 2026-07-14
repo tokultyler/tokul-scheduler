@@ -571,7 +571,7 @@ const MONS_L=['January','February','March','April','May','June','July','August',
 
 // ── STATE ─────────────────────────────────────────────────────
 let format=null,selectedShow=null,rep=null,appointments=[],curStep=1;
-let calMonth=new Date(2026,4,1);
+let calMonth=(()=>{const t=new Date();return new Date(t.getFullYear(),t.getMonth(),1)})();
 let bBrand=null,bCat=null,bDur=null,bDate=null,bTime=null;
 
 // ── HELPERS ───────────────────────────────────────────────────
@@ -934,7 +934,7 @@ async function pickDate(dateStr,el){
 // or different duration for the same brand is treated as a real conflict.
 // Virtual keeps a brand-only key since there's no category distinction there.
 function conflictKey(brand, category, duration){
-  return format==='virtual' ? brand : brand+'||'+category+'||'+duration;
+  return format==='virtual' ? brand+'||'+duration : brand+'||'+category+'||'+duration;
 }
 function currentKey(){ return conflictKey(bBrand, bCat, bDur); }
 
