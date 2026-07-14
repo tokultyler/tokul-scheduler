@@ -509,7 +509,15 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
 
 <script>
 // ══════════════════════════════════════════════════════════════
+// API
+// ══════════════════════════════════════════════════════════════
+const API_BASE = 'https://tokul-scheduler-func-a0a3bpdwhqethzep.westus-01.azurewebsites.net/api';
+
+// ══════════════════════════════════════════════════════════════
 // CONFIG
+// These are fallback/default values used only if the live config
+// fetch from the backend fails (e.g. network issue). Once the page
+// loads, loadConfigFromServer() overwrites this with real data.
 // ══════════════════════════════════════════════════════════════
 let CFG = {
   tradeShows: [
@@ -555,24 +563,8 @@ const ALL_REPS = {
 };
 const SHOWROOM_REPS = ['paul','austin'];
 
-// Mock booked slots. Each slot stores objects: {brand, category}
-// 'FULL' string still means fully blocked regardless of brand/category.
-// Virtual bookings store category as 'Virtual' — conflict is brand-only.
-const BOOKED = {
-  paul:  {'2026-05-05':{
-    '09:00':[{brand:'Merrell',category:'Line Showing'}],
-    '10:00':[{brand:'Toad & Co',category:"Men's"}],
-    '14:00':['FULL']}},
-  tyler: {'2026-05-05':{
-    '09:30':[{brand:'Toad & Co',category:"Women's"}],
-    '13:00':[{brand:'Merrell',category:'Line Showing'}]}},
-  pat:   {'2026-05-27':{
-    '10:00':[{brand:'Western Mountaineering',category:'Line Showing'}],
-    '14:30':['FULL']}},
-  austin:{'2026-06-01':{
-    '09:00':[{brand:'Outdoor Research',category:"Men's"}],
-    '13:30':[{brand:'Toad & Co',category:"Men's"}]}},
-};
+// Real rep availability is now fetched live from the Azure Function
+// backend (see fetchLiveBusySlots) instead of using mock data here.
 
 const MONS_S=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONS_L=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -877,78 +869,126 @@ function getEventTimezone(){
   return{tz, label: tz==='America/Denver'?'Mountain Time (MT)':'Pacific Time (PT)'};
 }
 
-function pickDate(dateStr,el){
+// Cache of live availability fetches, keyed by "rep|date", so re-picking
+// the same date doesn't re-fetch. Cleared when the rep changes (not needed
+// currently since rep is fixed per session, but harmless to keep simple).
+const availabilityCache = {};
+
+// Fetches real busy blocks for a rep/date from the backend and returns them
+// as a list of intervals: { time, duration, brand, category }. Events our
+// own booking flow created carry brand/category tags (Outlook categories);
+// anything else (personal meetings, vacation, etc.) has brand=null and will
+// never match a conflictKey, so it always fully blocks.
+async function fetchLiveBusyIntervals(repKey, dateStr){
+  const cacheKey = repKey + '|' + dateStr;
+  if(availabilityCache[cacheKey]) return availabilityCache[cacheKey];
+
+  const res = await fetch(API_BASE + '/availability?rep=' + encodeURIComponent(repKey) + '&date=' + encodeURIComponent(dateStr));
+  if(!res.ok) throw new Error('Availability fetch failed: ' + res.status);
+  const data = await res.json();
+
+  const intervals = (data.busy || []).map(block=>{
+    // block.start/end are ISO datetimes in the rep's local timezone, e.g. "2026-07-20T10:00:00"
+    const startTime = block.start.slice(11,16);
+    const startMins = timeStrToMins(startTime);
+    const endMins = timeStrToMins(block.end.slice(11,16));
+    return {
+      time: startTime,
+      duration: Math.max(endMins - startMins, 0),
+      brand: block.brand || null,
+      category: block.category || null,
+      subject: block.subject || 'Unavailable'
+    };
+  });
+
+  availabilityCache[cacheKey] = intervals;
+  return intervals;
+}
+function timeStrToMins(t){const[h,m]=t.split(':');return parseInt(h)*60+parseInt(m)}
+
+async function pickDate(dateStr,el){
   document.querySelectorAll('.mc-day').forEach(d=>d.classList.remove('mc-sel'));
   el.classList.add('mc-sel'); bDate=dateStr; bTime=null; $('add-btn').disabled=true;
   const[y,mo,d]=dateStr.split('-');
   $('tp-date').textContent=MONS_S[parseInt(mo)-1]+' '+parseInt(d)+', '+y;
   const{label}=getEventTimezone();
   $('tp-tz-text').textContent='Times shown in '+label;
-  renderTimePicker(dateStr); $('tpick').style.display='block';
+
+  $('tpick').style.display='block';
+  const grid=$('tp-grid');
+  grid.innerHTML='<div class="no-slots">Checking availability...</div>';
+
+  try{
+    const liveIntervals = await fetchLiveBusyIntervals(rep, dateStr);
+    renderTimePicker(dateStr, liveIntervals);
+  }catch(err){
+    console.error('Could not load live availability:', err);
+    grid.innerHTML='<div class="no-slots">Could not load availability — please try again.</div>';
+  }
 }
 
 // ── TIME PICKER ───────────────────────────────────────────────
-// Conflict key: brand+category for showroom/trade-show, brand-only for virtual
-function conflictKey(brand, category){
-  return format==='virtual' ? brand : brand+'||'+category;
+// Conflict key includes brand + category + duration (for showroom/trade-show)
+// so two appointments only stack when they're the exact same type and length,
+// e.g. two 90-min Outdoor Research Women's appointments. Different category
+// or different duration for the same brand is treated as a real conflict.
+// Virtual keeps a brand-only key since there's no category distinction there.
+function conflictKey(brand, category, duration){
+  return format==='virtual' ? brand : brand+'||'+category+'||'+duration;
 }
-function currentKey(){ return conflictKey(bBrand, bCat); }
+function currentKey(){ return conflictKey(bBrand, bCat, bDur); }
 
-function renderTimePicker(dateStr){
+function renderTimePicker(dateStr, liveIntervals){
   const grid=$('tp-grid'); grid.innerHTML='';
   const slots=getSlotsForDate(dateStr);
   if(slots.length===0){
     grid.innerHTML='<div class="no-slots">No available slots for this date.</div>'; return;
   }
-  const repBooked=((BOOKED[rep]||{})[dateStr])||{};
+  const intervals = liveIntervals || [];
   const myKey=currentKey();
 
   slots.forEach(t=>{
     const el=document.createElement('div'); el.className='tp-slot';
-    const existing=repBooked[t]||[];
-    const isFull=existing.includes('FULL');
 
-    let realConflictLabel=null, realIsStack=false;
-    if(!isFull){
-      for(const[bt,entries] of Object.entries(repBooked)){
-        if(entries.includes('FULL'))continue;
-        if(overlaps(t,bDur,bt,30)){
-          for(const e of entries){
-            const eKey=conflictKey(e.brand, e.category);
-            if(eKey!==myKey){
-              // Different brand or same brand different category — conflict
-              realConflictLabel = e.brand===bBrand
-                ? e.brand+' '+e.category  // same brand, diff cat: show category
-                : e.brand;                // diff brand: show brand name
-              break;
-            } else {
-              realIsStack=true;           // exact same brand+category — stack OK
-            }
-          }
-        }
-        if(realConflictLabel)break;
+    // Check against real calendar events for this rep/day
+    let realConflictLabel=null, realIsStack=false, isFull=false;
+    for(const iv of intervals){
+      if(!overlaps(t,bDur,iv.time,iv.duration))continue;
+      if(iv.brand===null){
+        // Untagged real event (meeting, vacation, etc.) — always fully blocks
+        realConflictLabel = iv.subject || 'Unavailable';
+        isFull = true;
+        break;
+      }
+      const ivKey=conflictKey(iv.brand, iv.category, iv.duration);
+      if(ivKey!==myKey){
+        realConflictLabel = iv.brand===bBrand ? iv.brand+' '+iv.category : iv.brand;
+        break;
+      } else {
+        realIsStack=true;
       }
     }
 
+    // Check against appointments added earlier in this same booking session
     let sessConflictLabel=null, sessIsStack=false;
-    for(const a of appointments){
-      if(a.date!==dateStr)continue;
-      if(overlaps(t,bDur,a.time,a.duration)){
-        const aKey=conflictKey(a.brand, a.category);
-        if(aKey!==myKey){
-          sessConflictLabel = a.brand===bBrand
-            ? a.brand+' '+a.category
-            : a.brand;
-          break;
-        } else {
-          sessIsStack=true;
+    if(!realConflictLabel){
+      for(const a of appointments){
+        if(a.date!==dateStr)continue;
+        if(overlaps(t,bDur,a.time,a.duration)){
+          const aKey=conflictKey(a.brand, a.category, a.duration);
+          if(aKey!==myKey){
+            sessConflictLabel = a.brand===bBrand ? a.brand+' '+a.category : a.brand;
+            break;
+          } else {
+            sessIsStack=true;
+          }
         }
       }
     }
 
     const isConflict=!!realConflictLabel||!!sessConflictLabel;
     const conflictLabel=realConflictLabel||sessConflictLabel;
-    const isStacking=!isFull&&!isConflict&&(realIsStack||sessIsStack);
+    const isStacking=!isConflict&&(realIsStack||sessIsStack);
 
     if(isFull){
       el.classList.add('tp-blk');
@@ -1014,17 +1054,72 @@ function updateSummary(){
 }
 
 // ── SUBMIT ────────────────────────────────────────────────────
-function submitBooking(){
+// Creates a real Outlook calendar event for one appointment via the
+// backend. Computes the end time from start time + duration.
+async function createBookingOnServer(appt, contact){
+  const{tz}=getEventTimezone();
+  const endTime=addMins(appt.time, appt.duration);
+  const res = await fetch(API_BASE + '/booking', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      rep: rep,
+      start: appt.date + 'T' + appt.time + ':00',
+      end: appt.date + 'T' + endTime + ':00',
+      retailerName: contact.store,
+      retailerEmail: contact.email,
+      brand: appt.brand,
+      category: appt.category,
+      format: appt.brand + ' — ' + appt.category,
+      location: format==='trade-show' ? (selectedShow?.location||'') : format==='showroom' ? 'Tokul Creek Showroom' : 'Virtual / Phone',
+      notes: contact.notes
+    })
+  });
+  if(!res.ok) throw new Error('Booking failed for ' + appt.brand + ' (' + res.status + ')');
+  return res.json();
+}
+
+async function submitBooking(){
   const first=$('f-first').value.trim(),last=$('f-last').value.trim();
   const email=$('f-email').value.trim(),store=$('f-store').value.trim();
+  const notes=$('f-notes').value.trim();
   if(!first||!last||!email||!store){$('err-contact').classList.add('show');return}
+
+  const contact={first,last,email,store,notes};
+  const submitBtn=document.querySelector('#step-4 .btn-next');
+  submitBtn.disabled=true; submitBtn.textContent='Booking...';
+  $('err-contact').classList.remove('show');
+
+  const failures=[];
+  for(const appt of appointments){
+    try{
+      await createBookingOnServer(appt, contact);
+    }catch(err){
+      console.error(err);
+      failures.push(appt.brand + ' ' + appt.category);
+    }
+  }
+
+  submitBtn.disabled=false; submitBtn.textContent='Confirm Booking ✓';
+
+  if(failures.length===appointments.length){
+    // Everything failed — don't show success, let them know and retry
+    $('err-contact').textContent='Could not create any bookings — please check your connection and try again.';
+    $('err-contact').classList.add('show');
+    return;
+  }
+
   document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
   $('success-screen').classList.add('show');
   document.querySelectorAll('.step-pill').forEach(p=>{p.classList.remove('active');p.classList.add('done')});
   $('conf-email').textContent=email;
   const listEl=$('suc-list');
   const fmtLabel=format==='trade-show'?'Trade Show — '+(selectedShow?.name||''):format==='showroom'?'Showroom':'Virtual / Phone';
-  listEl.innerHTML=`<div style="font-size:.71rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--bark);margin-bottom:8px">With ${ALL_REPS[rep]?.name} · ${fmtLabel}</div>`;
+  let headerHtml=`<div style="font-size:.71rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--bark);margin-bottom:8px">With ${ALL_REPS[rep]?.name} · ${fmtLabel}</div>`;
+  if(failures.length>0){
+    headerHtml+=`<div style="font-size:.75rem;color:var(--red);margin-bottom:10px">⚠ ${failures.length} appointment(s) could not be booked: ${failures.join(', ')}. Please contact your rep directly for these.</div>`;
+  }
+  listEl.innerHTML=headerHtml;
   [...appointments].sort((a,b)=>a.date!==b.date?(a.date<b.date?-1:1):(a.time<b.time?-1:1)).forEach(a=>{
     const[y,mo,d]=a.date.split('-');
     const item=document.createElement('div');item.className='suc-appt';
@@ -1172,7 +1267,7 @@ function addBlackout(){
 }
 function deleteBlackout(i){CFG.blackouts.splice(i,1);renderAdminBlackouts()}
 
-function saveConfig(){
+async function saveConfig(){
   CFG.defaultHours={
     open:$('h-open').value,close:$('h-close').value,
     lunchStart:$('h-lunch-start').value,lunchEnd:$('h-lunch-end').value,
@@ -1184,17 +1279,74 @@ function saveConfig(){
   renderAdminBlackouts();
   loadHoursForm();
   renderFormatGrid();
-  $('save-confirm').classList.add('show');
-  setTimeout(()=>$('save-confirm').classList.remove('show'),3000);
+
+  const btn=document.querySelector('.save-btn');
+  const confirmEl=$('save-confirm');
+  btn.disabled=true; btn.textContent='Saving...';
+  try{
+    await saveConfigToServer();
+    confirmEl.textContent='✓ Saved';
+    confirmEl.style.color='';
+    confirmEl.classList.add('show');
+  }catch(err){
+    console.error('Save failed:', err);
+    confirmEl.textContent='⚠ Save failed — check connection and try again';
+    confirmEl.style.color='var(--red)';
+    confirmEl.classList.add('show');
+  }finally{
+    btn.disabled=false; btn.textContent='Save Changes';
+    setTimeout(()=>confirmEl.classList.remove('show'),4000);
+  }
+}
+
+// ── CONFIG LOADING (live backend) ───────────────────────────────
+// Fetches the real admin config (trade shows, blackouts, seasons, hours)
+// from the Azure Function + Table Storage backend. Falls back to the
+// hardcoded CFG defaults above if the request fails, so the page still
+// works (with stale data) if the backend is briefly unreachable.
+async function loadConfigFromServer(){
+  try{
+    const res = await fetch(API_BASE + '/config');
+    if(!res.ok) throw new Error('Config fetch failed: ' + res.status);
+    const data = await res.json();
+    // Only overwrite fields that are present in the response, keeping
+    // fallback defaults for anything the backend hasn't saved yet.
+    if(data.tradeShows) CFG.tradeShows = data.tradeShows;
+    if(data.showroomWindows) CFG.showroomWindows = data.showroomWindows;
+    if(data.blackouts) CFG.blackouts = data.blackouts;
+    if(data.defaultHours) CFG.defaultHours = data.defaultHours;
+  }catch(err){
+    console.error('Could not load live config, using defaults:', err);
+  }
+}
+
+// Pushes the current CFG object to the backend so it persists and is
+// shared across everyone who opens the admin panel or booking page.
+async function saveConfigToServer(){
+  const res = await fetch(API_BASE + '/config', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      tradeShows: CFG.tradeShows,
+      showroomWindows: CFG.showroomWindows,
+      blackouts: CFG.blackouts,
+      defaultHours: CFG.defaultHours
+    })
+  });
+  if(!res.ok) throw new Error('Config save failed: ' + res.status);
+  return res.json();
 }
 
 // ── INIT ──────────────────────────────────────────────────────
-renderFormatGrid();
+(async function init(){
+  await loadConfigFromServer();
+  renderFormatGrid();
 
-// URL param admin trigger: ?admin opens admin panel automatically
-if(new URLSearchParams(window.location.search).has('admin')){
-  openAdmin();
-}
+  // URL param admin trigger: ?admin opens admin panel automatically
+  if(new URLSearchParams(window.location.search).has('admin')){
+    openAdmin();
+  }
+})();
 </script>
 </body>
 </html>
