@@ -932,7 +932,7 @@ async function pickDate(dateStr,el){
 // so two appointments only stack when they're the exact same type and length,
 // e.g. two 90-min Outdoor Research Women's appointments. Different category
 // or different duration for the same brand is treated as a real conflict.
-// Virtual keeps a brand-only key since there's no category distinction there.
+// Virtual has no category distinction, but still requires matching duration.
 function conflictKey(brand, category, duration){
   return format==='virtual' ? brand+'||'+duration : brand+'||'+category+'||'+duration;
 }
