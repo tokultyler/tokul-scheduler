@@ -1311,7 +1311,19 @@ async function loadConfigFromServer(){
     const data = await res.json();
     // Only overwrite fields that are present in the response, keeping
     // fallback defaults for anything the backend hasn't saved yet.
-    if(data.tradeShows) CFG.tradeShows = data.tradeShows;
+    // Only accept trade show entries that have the fields the rest of the
+    // app depends on (dateHours, reps). A malformed record — e.g. leftover
+    // test data — is skipped rather than crashing renderFormatGrid/renderMCal.
+    if(data.tradeShows && Array.isArray(data.tradeShows)){
+      const validShows = data.tradeShows.filter(s => s && s.dateHours && typeof s.dateHours==='object' && Array.isArray(s.reps));
+      if(validShows.length === data.tradeShows.length){
+        CFG.tradeShows = validShows;
+      } else if(validShows.length > 0){
+        console.warn('Some trade show records were malformed and skipped.');
+        CFG.tradeShows = validShows;
+      }
+      // If none are valid, keep the existing fallback defaults rather than wiping to empty.
+    }
     if(data.showroomWindows) CFG.showroomWindows = data.showroomWindows;
     if(data.blackouts) CFG.blackouts = data.blackouts;
     if(data.defaultHours) CFG.defaultHours = data.defaultHours;
