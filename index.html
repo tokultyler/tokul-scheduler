@@ -946,12 +946,13 @@ function renderTimePicker(dateStr, liveIntervals){
   }
   const intervals = liveIntervals || [];
   const myKey=currentKey();
+  const STACK_LIMIT=3; // max identical (brand+category+duration, same start time) appointments allowed at once
 
   slots.forEach(t=>{
     const el=document.createElement('div'); el.className='tp-slot';
 
     // Check against real calendar events for this rep/day
-    let realConflictLabel=null, realIsStack=false, isFull=false;
+    let realConflictLabel=null, realStackCount=0, isFull=false;
     for(const iv of intervals){
       if(!overlaps(t,bDur,iv.time,iv.duration))continue;
       if(iv.brand===null){
@@ -969,12 +970,12 @@ function renderTimePicker(dateStr, liveIntervals){
         realConflictLabel = iv.brand===bBrand ? iv.brand+' '+iv.category : iv.brand;
         break;
       } else {
-        realIsStack=true;
+        realStackCount++;
       }
     }
 
     // Check against appointments added earlier in this same booking session
-    let sessConflictLabel=null, sessIsStack=false;
+    let sessConflictLabel=null, sessStackCount=0;
     if(!realConflictLabel){
       for(const a of appointments){
         if(a.date!==dateStr)continue;
@@ -986,26 +987,32 @@ function renderTimePicker(dateStr, liveIntervals){
             sessConflictLabel = a.brand===bBrand ? a.brand+' '+a.category : a.brand;
             break;
           } else {
-            sessIsStack=true;
+            sessStackCount++;
           }
         }
       }
     }
 
-    const isConflict=!!realConflictLabel||!!sessConflictLabel;
-    const conflictLabel=realConflictLabel||sessConflictLabel;
-    const isStacking=!isConflict&&(realIsStack||sessIsStack);
+    const totalStackCount = realStackCount + sessStackCount;
+    const stackFull = !realConflictLabel && !sessConflictLabel && totalStackCount >= STACK_LIMIT;
+
+    const isConflict=!!realConflictLabel||!!sessConflictLabel||stackFull;
+    const conflictLabel=realConflictLabel||sessConflictLabel||(bBrand+' '+bCat);
+    const isStacking=!isConflict&&totalStackCount>0;
 
     if(isFull){
       el.classList.add('tp-blk');
       el.innerHTML=fmt(t)+'<span class="tp-note">Unavailable</span>';
+    } else if(stackFull){
+      el.classList.add('tp-con');
+      el.innerHTML=fmt(t)+'<span class="tp-note">'+STACK_LIMIT+' already booked</span>';
     } else if(isConflict){
       el.classList.add('tp-con');
       el.innerHTML=fmt(t)+'<span class="tp-note">'+conflictLabel+' showing</span>';
     } else {
       if(isStacking)el.classList.add('tp-stack');
       if(bTime===t)el.classList.add('tp-sel');
-      el.innerHTML=fmt(t)+(isStacking?'<span class="tp-note" style="color:var(--moss)">+ stacking</span>':'');
+      el.innerHTML=fmt(t)+(isStacking?'<span class="tp-note" style="color:var(--moss)">+ stacking ('+totalStackCount+'/'+STACK_LIMIT+')</span>':'');
       el.onclick=()=>pickTime(t,el);
     }
     grid.appendChild(el);
