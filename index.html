@@ -961,7 +961,11 @@ function renderTimePicker(dateStr, liveIntervals){
         break;
       }
       const ivKey=conflictKey(iv.brand, iv.category, iv.duration);
-      if(ivKey!==myKey){
+      // Stacking only applies when it's the exact same slot (identical start
+      // time, not just an overlapping window) — e.g. two reps double-booking
+      // the same 5:00-6:00 Outdoor Research Women's appointment. A same-type
+      // appointment merely offset in time (4:30 vs 5:00) still conflicts.
+      if(ivKey!==myKey || iv.time!==t){
         realConflictLabel = iv.brand===bBrand ? iv.brand+' '+iv.category : iv.brand;
         break;
       } else {
@@ -976,7 +980,9 @@ function renderTimePicker(dateStr, liveIntervals){
         if(a.date!==dateStr)continue;
         if(overlaps(t,bDur,a.time,a.duration)){
           const aKey=conflictKey(a.brand, a.category, a.duration);
-          if(aKey!==myKey){
+          // Same rule as live data: only the identical start time counts as
+          // a valid stack, not just an overlapping window of the same type.
+          if(aKey!==myKey || a.time!==t){
             sessConflictLabel = a.brand===bBrand ? a.brand+' '+a.category : a.brand;
             break;
           } else {
