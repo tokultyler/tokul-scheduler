@@ -114,8 +114,6 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
 .ai-time{font-size:13px;font-weight:600;color:var(--olive-dark);white-space:nowrap;text-align:right;line-height:1.5}
 .ai-rm{cursor:pointer;color:#bbb;font-size:18px;line-height:1;transition:color .14s;flex-shrink:0;margin-left:4px}
 .ai-rm:hover{color:var(--red)}
-.add-another{display:flex;align-items:center;gap:9px;padding:13px 15px;border:1.5px dashed var(--border);border-radius:2px;cursor:pointer;color:var(--muted);font-size:15px;transition:all .16s;margin-top:3px}
-.add-another:hover{border-color:var(--olive);color:var(--olive)}
 .legend{display:flex;flex-direction:column;gap:6px;margin-top:12px}
 .li{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
 .ld{width:11px;height:11px;border-radius:1px;flex-shrink:0}
@@ -319,10 +317,6 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
           <span class="appt-badge" id="appt-count">0</span>
         </div>
         <div id="appt-items"></div>
-        <div class="add-another" onclick="startAnother()">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v6M5 8h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          Add another brand
-        </div>
       </div>
       <div class="val-error" id="err-appts">Please add at least one appointment.</div>
       <div class="btn-row">
@@ -628,11 +622,23 @@ function isVirtualAvailable(dateStr){
 }
 
 // ── NAV ───────────────────────────────────────────────────────
+// Guards against a rep left over from a prior format/show selection that
+// isn't actually valid for the current one (e.g. Tyler was picked for a
+// Trade Show, then the format was switched back to Showroom, where only
+// Paul and Austin are available).
+function repValidForFormat(){
+  if(!rep)return false;
+  if(format==='showroom')return SHOWROOM_REPS.includes(rep);
+  if(format==='trade-show')return !!selectedShow && selectedShow.reps.includes(rep);
+  return !!ALL_REPS[rep];
+}
 function goStep(n){
   if(n>curStep){
     if(curStep===1&&!format){$('err-format').classList.add('show');return}
-    if(curStep===2&&!rep){$('err-rep').classList.add('show');return}
-    if(curStep===3&&appointments.length===0){$('err-appts').classList.add('show');return}
+    if(curStep===2){
+      if(!repValidForFormat()){rep=null;$('err-rep').classList.add('show');return}
+    }
+    if(curStep===3&&appointments.length===0){$('err-appts').textContent='Please add at least one appointment.';$('err-appts').classList.add('show');return}
   }
   document.querySelectorAll('.val-error').forEach(e=>e.classList.remove('show'));
   document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
@@ -675,6 +681,10 @@ function renderFormatGrid(){
 
 // ── STEP 2: REP ───────────────────────────────────────────────
 function renderRepStep(){
+  if(!repValidForFormat()){
+    rep=null;
+    $('sum-rep').textContent='Not selected'; $('sum-rep').classList.add('empty');
+  }
   const sp=$('show-picker'),rw=$('rep-grid-wrap');
   sp.style.display='none'; rw.style.display='block'; $('rep-grid').innerHTML='';
   if(format==='trade-show'){
@@ -938,67 +948,86 @@ function conflictKey(brand, category, duration){
 }
 function currentKey(){ return conflictKey(bBrand, bCat, bDur); }
 
-function renderTimePicker(dateStr, liveIntervals){
-  const grid=$('tp-grid'); grid.innerHTML='';
-  const slots=getSlotsForDate(dateStr);
-  if(slots.length===0){
-    grid.innerHTML='<div class="no-slots">No available slots for this date.</div>'; return;
-  }
-  const intervals = liveIntervals || [];
+const STACK_LIMIT=3; // max identical (brand+category+duration, same start time) appointments allowed at once
+
+// Tracks the live intervals + date currently loaded into the time picker so
+// commitAppt() can do a final revalidation right before pushing, in case the
+// picker's rendered state ever goes stale relative to bBrand/bCat/bDur/bTime.
+let currentLiveIntervals=[], currentLiveDate=null;
+
+// Evaluates one slot for the current builder selection (bBrand/bCat/bDur)
+// against real calendar intervals and appointments already added this
+// session. Shared by renderTimePicker (for display) and commitAppt (as a
+// final guard) so the two can never disagree.
+function evaluateSlot(t, dateStr, intervals){
   const myKey=currentKey();
-  const STACK_LIMIT=3; // max identical (brand+category+duration, same start time) appointments allowed at once
 
-  slots.forEach(t=>{
-    const el=document.createElement('div'); el.className='tp-slot';
-
-    // Check against real calendar events for this rep/day
-    let realConflictLabel=null, realStackCount=0, isFull=false;
-    for(const iv of intervals){
-      if(!overlaps(t,bDur,iv.time,iv.duration))continue;
-      if(iv.brand===null){
-        // Untagged real event (meeting, vacation, etc.) — always fully blocks
-        realConflictLabel = iv.subject || 'Unavailable';
-        isFull = true;
-        break;
-      }
-      const ivKey=conflictKey(iv.brand, iv.category, iv.duration);
-      // Stacking only applies when it's the exact same slot (identical start
-      // time, not just an overlapping window) — e.g. two reps double-booking
-      // the same 5:00-6:00 Outdoor Research Women's appointment. A same-type
-      // appointment merely offset in time (4:30 vs 5:00) still conflicts.
-      if(ivKey!==myKey || iv.time!==t){
-        realConflictLabel = iv.brand===bBrand ? iv.brand+' '+iv.category : iv.brand;
-        break;
-      } else {
-        realStackCount++;
-      }
+  // Check against real calendar events for this rep/day
+  let realConflictLabel=null, realStackCount=0, isFull=false;
+  for(const iv of intervals){
+    if(!overlaps(t,bDur,iv.time,iv.duration))continue;
+    if(iv.brand===null){
+      // Untagged real event (meeting, vacation, etc.) — always fully blocks
+      realConflictLabel = iv.subject || 'Unavailable';
+      isFull = true;
+      break;
     }
+    const ivKey=conflictKey(iv.brand, iv.category, iv.duration);
+    // Stacking only applies when it's the exact same slot (identical start
+    // time, not just an overlapping window) — e.g. two reps double-booking
+    // the same 5:00-6:00 Outdoor Research Women's appointment. A same-type
+    // appointment merely offset in time (4:30 vs 5:00) still conflicts.
+    if(ivKey!==myKey || iv.time!==t){
+      realConflictLabel = iv.brand===bBrand ? iv.brand+' '+iv.category : iv.brand;
+      break;
+    } else {
+      realStackCount++;
+    }
+  }
 
-    // Check against appointments added earlier in this same booking session
-    let sessConflictLabel=null, sessStackCount=0;
-    if(!realConflictLabel){
-      for(const a of appointments){
-        if(a.date!==dateStr)continue;
-        if(overlaps(t,bDur,a.time,a.duration)){
-          const aKey=conflictKey(a.brand, a.category, a.duration);
-          // Same rule as live data: only the identical start time counts as
-          // a valid stack, not just an overlapping window of the same type.
-          if(aKey!==myKey || a.time!==t){
-            sessConflictLabel = a.brand===bBrand ? a.brand+' '+a.category : a.brand;
-            break;
-          } else {
-            sessStackCount++;
-          }
+  // Check against appointments added earlier in this same booking session —
+  // e.g. an 11:00 Chaco appointment already staged must block (or stack
+  // with, if identical) an 11:00 Exped appointment for the same date.
+  let sessConflictLabel=null, sessStackCount=0;
+  if(!realConflictLabel){
+    for(const a of appointments){
+      if(a.date!==dateStr)continue;
+      if(overlaps(t,bDur,a.time,a.duration)){
+        const aKey=conflictKey(a.brand, a.category, a.duration);
+        // Same rule as live data: only the identical start time counts as
+        // a valid stack, not just an overlapping window of the same type.
+        if(aKey!==myKey || a.time!==t){
+          sessConflictLabel = a.brand===bBrand ? a.brand+' '+a.category : a.brand;
+          break;
+        } else {
+          sessStackCount++;
         }
       }
     }
+  }
 
-    const totalStackCount = realStackCount + sessStackCount;
-    const stackFull = !realConflictLabel && !sessConflictLabel && totalStackCount >= STACK_LIMIT;
+  const totalStackCount = realStackCount + sessStackCount;
+  const stackFull = !realConflictLabel && !sessConflictLabel && totalStackCount >= STACK_LIMIT;
+  const isConflict=!!realConflictLabel||!!sessConflictLabel||stackFull;
+  const conflictLabel=realConflictLabel||sessConflictLabel||(bBrand+' '+bCat);
+  const isStacking=!isConflict&&totalStackCount>0;
 
-    const isConflict=!!realConflictLabel||!!sessConflictLabel||stackFull;
-    const conflictLabel=realConflictLabel||sessConflictLabel||(bBrand+' '+bCat);
-    const isStacking=!isConflict&&totalStackCount>0;
+  return {isFull, isConflict, conflictLabel, isStacking, totalStackCount, stackFull};
+}
+
+function renderTimePicker(dateStr, liveIntervals){
+  const grid=$('tp-grid'); grid.innerHTML='';
+  const slots=getSlotsForDate(dateStr);
+  currentLiveIntervals = liveIntervals || [];
+  currentLiveDate = dateStr;
+  if(slots.length===0){
+    grid.innerHTML='<div class="no-slots">No available slots for this date.</div>'; return;
+  }
+  const intervals = currentLiveIntervals;
+
+  slots.forEach(t=>{
+    const el=document.createElement('div'); el.className='tp-slot';
+    const{isFull,isConflict,conflictLabel,isStacking,totalStackCount,stackFull}=evaluateSlot(t,dateStr,intervals);
 
     if(isFull){
       el.classList.add('tp-blk');
@@ -1025,6 +1054,20 @@ function pickTime(t,el){
 
 // ── COMMIT ────────────────────────────────────────────────────
 function commitAppt(){
+  // Final guard: re-check the selected slot against real intervals + session
+  // appointments right before committing, in case anything changed since the
+  // grid was last rendered (e.g. two brands booked back-to-back for the same
+  // rep/day). This must never let a real conflict through even if a stale UI
+  // state somehow allowed the slot to be clicked.
+  if(bDate===currentLiveDate){
+    const check=evaluateSlot(bTime, bDate, currentLiveIntervals);
+    if(check.isFull||check.isConflict){
+      $('err-appts').textContent='That time is no longer available — please pick another.';
+      $('err-appts').classList.add('show');
+      pickDate(bDate, document.querySelector('.mc-day.mc-sel'));
+      return;
+    }
+  }
   // Virtual has no category selection — store 'Virtual' as category
   // but conflict logic uses brand-only key for virtual so this is just for display
   const cat = format==='virtual' ? 'Virtual' : bCat;
@@ -1038,7 +1081,6 @@ function resetBuilder(){
   $('b-dur').innerHTML='<option value="">— Duration —</option>';$('b-dur').disabled=true;
   $('mcal').style.display='none';$('tpick').style.display='none';$('add-btn').disabled=true;
 }
-function startAnother(){$('builder-form').scrollIntoView({behavior:'smooth',block:'nearest'});resetBuilder()}
 function removeAppt(idx){
   appointments.splice(idx,1);renderApptList();updateSummary();
   if(appointments.length===0)$('appt-list').style.display='none';
@@ -1083,6 +1125,7 @@ async function createBookingOnServer(appt, contact){
       retailerEmail: contact.email,
       brand: appt.brand,
       category: appt.category,
+      timezone: tz, // trade-show timezone overrides rep default — see getEventTimezone()
       format: appt.brand + ' — ' + appt.category,
       location: format==='trade-show' ? (selectedShow?.location||'') : format==='showroom' ? 'Tokul Creek Showroom' : 'Virtual / Phone',
       notes: contact.notes
