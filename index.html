@@ -1270,6 +1270,7 @@ function addShow(){
   }
   CFG.tradeShows.push({id:'ts'+Date.now(),name,location:loc,timezone,dateHours,reps});
   $('ns-name').value='';$('ns-loc').value='';$('ns-start').value='';$('ns-end').value='';
+  $('ns-tz').value='America/Los_Angeles';
   $('ns-date-hours').style.display='none';$('ns-date-hours-rows').innerHTML='';
   $('ns-reps').querySelectorAll('input').forEach(c=>c.checked=false);
   renderAdminShows();renderFormatGrid();
