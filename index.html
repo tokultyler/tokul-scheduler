@@ -687,6 +687,11 @@ function renderRepStep(){
   }
   const sp=$('show-picker'),rw=$('rep-grid-wrap');
   sp.style.display='none'; rw.style.display='block'; $('rep-grid').innerHTML='';
+  // These section labels are only relevant for the trade-show 2-step picker.
+  // Always clear any previously-injected copies first so switching formats
+  // back and forth never leaves duplicates or stale labels behind.
+  document.getElementById('ts-show-label')?.remove();
+  document.getElementById('ts-rep-label')?.remove();
   if(format==='trade-show'){
     const today=todayStr();
     const shows=CFG.tradeShows.filter(s=>Object.keys(s.dateHours).some(d=>d>=today));
@@ -696,6 +701,7 @@ function renderRepStep(){
 
     // Section 1 label
     const lbl1=document.createElement('div');
+    lbl1.id='ts-show-label';
     lbl1.className='ts-section-label tsl-show';
     lbl1.innerHTML='<span class="tsl-num">1</span> Select Trade Show';
     sg.before(lbl1);
@@ -713,17 +719,18 @@ function renderRepStep(){
       div.onclick=()=>{
         document.querySelectorAll('.show-card').forEach(c=>c.classList.remove('selected'));
         div.classList.add('selected'); selectedShow=show; rep=null;
-        const repSec=document.getElementById('ts-rep-section');
-        repSec.classList.add('visible');
+        rw.classList.add('visible');
         renderRepCards(show.reps);
       };
       sg.appendChild(div);
     });
 
-    // Section 2 label + rep grid — injected after show grid
-    rw.id='ts-rep-section';
+    // Section 2 label + rep grid — injected after show grid. The wrapper's
+    // id stays 'rep-grid-wrap' always; only classes change so future
+    // getElementById('rep-grid-wrap') lookups keep working.
     rw.className='ts-rep-section'+(selectedShow?' visible':'');
     const lbl2=document.createElement('div');
+    lbl2.id='ts-rep-label';
     lbl2.className='ts-section-label tsl-rep';
     lbl2.innerHTML='<span class="tsl-num">2</span> Select Your Rep';
     rw.insertBefore(lbl2, rw.firstChild);
@@ -731,14 +738,11 @@ function renderRepStep(){
     if(selectedShow)renderRepCards(selectedShow.reps);
     else $('rep-grid').innerHTML='';
   } else if(format==='showroom'){
-    rw.id='rep-grid-wrap'; rw.className='';
-    // Remove any injected section label from prior trade show render
-    rw.querySelector('.ts-section-label')?.remove();
+    rw.className='';
     $('rep-subtitle').textContent='Showroom appointments are with Paul or Austin';
     renderRepCards(SHOWROOM_REPS);
   } else {
-    rw.id='rep-grid-wrap'; rw.className='';
-    rw.querySelector('.ts-section-label')?.remove();
+    rw.className='';
     $('rep-subtitle').textContent='Choose the Tokul Creek rep assigned to your account';
     renderRepCards(Object.keys(ALL_REPS));
   }
