@@ -102,6 +102,10 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
 .add-appt-btn{margin-top:16px;width:100%;padding:13px;background:var(--olive);color:white;border:none;border-radius:2px;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;letter-spacing:.05em;cursor:pointer;transition:background .16s;text-transform:uppercase}
 .add-appt-btn:hover{background:var(--olive-dark)}
 .add-appt-btn:disabled{background:#c8c8c8;cursor:not-allowed}
+.bf-help{font-size:.78rem;color:var(--bark);margin:-4px 0 14px;line-height:1.4}
+.add-confirm{display:none;align-items:center;gap:8px;margin-top:10px;padding:10px 14px;background:#e8f0e3;border:1.5px solid var(--sage);border-radius:2px;font-size:.82rem;color:var(--pine);font-weight:600;animation:fadeUp .25s ease}
+.add-confirm.show{display:flex}
+.appt-item.appt-new{animation:fadeUp .3s ease}
 .appt-list{margin-top:22px;display:none}
 .appt-list-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .appt-list-ttl{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;color:var(--charcoal);text-transform:uppercase;letter-spacing:.05em}
@@ -268,6 +272,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
       <p class="subtitle">Add each brand with its own date and time.</p>
       <div class="builder-form" id="builder-form">
         <h4>Add Appointment</h4>
+        <p class="bf-help">Add as many appointments as you'd like — each appears in the list below.</p>
         <!-- Virtual: brand + duration only. Showroom/Trade: brand + category + duration -->
         <div class="bf-row cols3" id="bf-full-row">
           <div class="bf-field"><label>Brand</label>
@@ -309,11 +314,12 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
             <div class="li"><div class="ld" style="background:#f5f0eb;border:1.5px solid var(--stone)"></div> Unavailable</div>
           </div>
         </div>
-        <button class="add-appt-btn" id="add-btn" onclick="commitAppt()" disabled>+ Add to Schedule</button>
+        <button class="add-appt-btn" id="add-btn" onclick="commitAppt()" disabled>+ Add This Appointment</button>
+        <div class="add-confirm" id="add-confirm">✓ <span id="add-confirm-text">Appointment added below.</span> Add another, or continue when you're ready.</div>
       </div>
       <div class="appt-list" id="appt-list">
         <div class="appt-list-hdr">
-          <span class="appt-list-ttl">Scheduled Appointments</span>
+          <span class="appt-list-ttl">Your Scheduled Appointments</span>
           <span class="appt-badge" id="appt-count">0</span>
         </div>
         <div id="appt-items"></div>
@@ -321,7 +327,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
       <div class="val-error" id="err-appts">Please add at least one appointment.</div>
       <div class="btn-row">
         <button class="btn-back" onclick="goStep(2)">← Back</button>
-        <button class="btn-next" onclick="goStep(4)">Continue →</button>
+        <button class="btn-next" onclick="goStep(4)">Finalize Your Booking →</button>
       </div>
     </div>
 
@@ -1075,8 +1081,19 @@ function commitAppt(){
   // Virtual has no category selection — store 'Virtual' as category
   // but conflict logic uses brand-only key for virtual so this is just for display
   const cat = format==='virtual' ? 'Virtual' : bCat;
+  const addedBrand = bBrand;
   appointments.push({brand:bBrand, category:cat, duration:bDur, date:bDate, time:bTime, format});
-  renderApptList(); updateSummary(); resetBuilder();
+  renderApptList(); updateSummary(); resetBuilder(); showAddConfirm(addedBrand);
+}
+let addConfirmTimer=null;
+function showAddConfirm(brand){
+  const box=$('add-confirm'), txt=$('add-confirm-text');
+  txt.textContent=(brand?brand+' appointment':'Appointment')+' added below.';
+  box.classList.add('show');
+  clearTimeout(addConfirmTimer);
+  addConfirmTimer=setTimeout(()=>box.classList.remove('show'), 4000);
+  const list=$('appt-list');
+  if(list) list.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 function resetBuilder(){
   bBrand=null;bCat=null;bDur=null;bDate=null;bTime=null;
@@ -1095,9 +1112,10 @@ function renderApptList(){
   list.style.display='block';$('appt-count').textContent=appointments.length;
   const sorted=[...appointments].map((a,i)=>({...a,idx:i})).sort((a,b)=>a.date!==b.date?(a.date<b.date?-1:1):(a.time<b.time?-1:1));
   items.innerHTML='';
+  const lastIdx=appointments.length-1;
   sorted.forEach(a=>{
     const[y,mo,d]=a.date.split('-');
-    const div=document.createElement('div');div.className='appt-item';
+    const div=document.createElement('div');div.className='appt-item'+(a.idx===lastIdx?' appt-new':'');
     div.innerHTML=`<div class="ai-icon">📋</div><div class="ai-body"><div class="ai-brand">${a.brand}</div><div class="ai-detail">${a.category} · ${a.duration} min</div></div><div class="ai-time">${MONS_S[parseInt(mo)-1]} ${parseInt(d)}, ${y}<br>${fmt(a.time)}</div><div class="ai-rm" onclick="removeAppt(${a.idx})">×</div>`;
     items.appendChild(div);
   });
