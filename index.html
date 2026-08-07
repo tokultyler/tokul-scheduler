@@ -135,6 +135,8 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
 .btn-next{flex:1;padding:12px 22px;background:var(--olive);border:none;border-radius:2px;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;letter-spacing:.05em;color:white;cursor:pointer;transition:background .16s;text-transform:uppercase}
 .btn-next:hover{background:var(--olive-dark)}
 .btn-next:disabled{background:#c8c8c8;cursor:not-allowed}
+.btn-add-another{padding:12px 20px;border:1.5px solid var(--olive);border-radius:2px;background:none;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;letter-spacing:.04em;color:var(--olive-dark);cursor:pointer;transition:all .16s;text-transform:uppercase}
+.btn-add-another:hover{background:var(--olive-faint)}
 .val-error{color:var(--red);font-size:14px;margin-top:8px;display:none}
 .val-error.show{display:block}
 .sidebar{display:flex;flex-direction:column;gap:16px}
@@ -314,9 +316,9 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
             <div class="li"><div class="ld" style="background:#f5f0eb;border:1.5px solid var(--stone)"></div> Unavailable</div>
           </div>
         </div>
-        <button class="add-appt-btn" id="add-btn" onclick="commitAppt()" disabled>+ Add This Appointment</button>
-        <div class="add-confirm" id="add-confirm">✓ <span id="add-confirm-text">Appointment added below.</span> Add another, or continue when you're ready.</div>
+        <button class="add-appt-btn" id="add-btn" onclick="commitAppt()" disabled>+ Add to Schedule</button>
       </div>
+      <div class="add-confirm" id="add-confirm">✓ <span id="add-confirm-text">Appointment added below.</span> Continue when you're ready.</div>
       <div class="appt-list" id="appt-list">
         <div class="appt-list-hdr">
           <span class="appt-list-ttl">Your Scheduled Appointments</span>
@@ -327,6 +329,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
       <div class="val-error" id="err-appts">Please add at least one appointment.</div>
       <div class="btn-row">
         <button class="btn-back" onclick="goStep(2)">← Back</button>
+        <button class="btn-add-another" id="add-another-btn" onclick="addAnotherAppt()" style="display:none">+ Add Another Appointment</button>
         <button class="btn-next" onclick="goStep(4)">Finalize Your Booking →</button>
       </div>
     </div>
@@ -785,7 +788,7 @@ function onBrand(){
   const cs=$('b-cat'),ds2=$('b-dur');
   cs.innerHTML='<option value="">— Category —</option>'; ds2.innerHTML='<option value="">— Duration —</option>';
   cs.disabled=true; ds2.disabled=true;
-  $('mcal').style.display='none'; $('tpick').style.display='none'; $('add-btn').disabled=true;
+  $('mcal').style.display='none'; $('tpick').style.display='none'; syncAddBtn(false);
   if(!bBrand)return;
   const isVirtual=format==='virtual';
   if(isVirtual){
@@ -802,7 +805,7 @@ function onBrand(){
 function onCat(){
   bCat=$('b-cat').value||null; bDur=null; bDate=null; bTime=null;
   const ds2=$('b-dur'); ds2.innerHTML='<option value="">— Duration —</option>'; ds2.disabled=true;
-  $('mcal').style.display='none'; $('tpick').style.display='none'; $('add-btn').disabled=true;
+  $('mcal').style.display='none'; $('tpick').style.display='none'; syncAddBtn(false);
   if(!bCat)return;
   const durs=BRANDS_FULL[bBrand][bCat];
   durs.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d+' min';ds2.appendChild(o)});
@@ -811,7 +814,7 @@ function onCat(){
 }
 function onDur(){
   bDur=$('b-dur').value?parseInt($('b-dur').value):null; bDate=null; bTime=null;
-  $('tpick').style.display='none'; $('add-btn').disabled=true;
+  $('tpick').style.display='none'; syncAddBtn(false);
   if(!bDur){$('mcal').style.display='none';return}
   $('mcal').style.display='block'; renderMCal();
 }
@@ -928,7 +931,7 @@ function timeStrToMins(t){const[h,m]=t.split(':');return parseInt(h)*60+parseInt
 
 async function pickDate(dateStr,el){
   document.querySelectorAll('.mc-day').forEach(d=>d.classList.remove('mc-sel'));
-  el.classList.add('mc-sel'); bDate=dateStr; bTime=null; $('add-btn').disabled=true;
+  el.classList.add('mc-sel'); bDate=dateStr; bTime=null; syncAddBtn(false);
   const[y,mo,d]=dateStr.split('-');
   $('tp-date').textContent=MONS_S[parseInt(mo)-1]+' '+parseInt(d)+', '+y;
   const{label}=getEventTimezone();
@@ -1059,7 +1062,7 @@ function renderTimePicker(dateStr, liveIntervals){
 }
 function pickTime(t,el){
   document.querySelectorAll('.tp-slot').forEach(s=>s.classList.remove('tp-sel'));
-  el.classList.add('tp-sel'); bTime=t; $('add-btn').disabled=false; $('err-appts').classList.remove('show');
+  el.classList.add('tp-sel'); bTime=t; syncAddBtn(true); $('err-appts').classList.remove('show');
 }
 
 // ── COMMIT ────────────────────────────────────────────────────
@@ -1083,7 +1086,7 @@ function commitAppt(){
   const cat = format==='virtual' ? 'Virtual' : bCat;
   const addedBrand = bBrand;
   appointments.push({brand:bBrand, category:cat, duration:bDur, date:bDate, time:bTime, format});
-  renderApptList(); updateSummary(); resetBuilder(); showAddConfirm(addedBrand);
+  renderApptList(); updateSummary(); resetBuilder(); collapseBuilder(); showAddConfirm(addedBrand);
 }
 let addConfirmTimer=null;
 function showAddConfirm(brand){
@@ -1095,21 +1098,47 @@ function showAddConfirm(brand){
   const list=$('appt-list');
   if(list) list.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
-function updateAddBtnLabel(){
-  $('add-btn').textContent = appointments.length>0 ? '+ Add Another Appointment' : '+ Add This Appointment';
+// "+ Add to Schedule" is only ever enabled once a full slot is selected —
+// disabled the rest of the time. Its label never changes; the separate
+// "Add Another Appointment" button (shown once the builder is collapsed)
+// is what invites additional appointments.
+function syncAddBtn(ready){
+  $('add-btn').disabled=!ready;
 }
 function resetBuilder(){
   bBrand=null;bCat=null;bDur=null;bDate=null;bTime=null;
   $('b-brand').value='';
   $('b-cat').innerHTML='<option value="">— Category —</option>';$('b-cat').disabled=true;
   $('b-dur').innerHTML='<option value="">— Duration —</option>';$('b-dur').disabled=true;
-  $('mcal').style.display='none';$('tpick').style.display='none';$('add-btn').disabled=true;
-  updateAddBtnLabel();
+  $('mcal').style.display='none';$('tpick').style.display='none';
+  syncAddBtn(false);
 }
 function removeAppt(idx){
   appointments.splice(idx,1);renderApptList();updateSummary();
-  if(appointments.length===0)$('appt-list').style.display='none';
-  updateAddBtnLabel();
+  if(appointments.length===0){
+    $('appt-list').style.display='none';
+    // No appointments left — put the builder back so they can start over.
+    $('builder-form').style.display='block';
+    $('add-another-btn').style.display='none';
+  }
+}
+// Collapses the builder after a successful add and surfaces the standalone
+// "Add Another Appointment" button between Back and Finalize instead.
+function collapseBuilder(){
+  $('builder-form').style.display='none';
+  $('add-another-btn').style.display='inline-block';
+}
+// Reopens the builder, scrolls to it, and opens the Brand dropdown so the
+// next step is unambiguous.
+function addAnotherAppt(){
+  $('add-another-btn').style.display='none';
+  $('builder-form').style.display='block';
+  $('builder-form').scrollIntoView({behavior:'smooth', block:'start'});
+  const brandSel=$('b-brand');
+  brandSel.focus();
+  if(typeof brandSel.showPicker==='function'){
+    try{ brandSel.showPicker(); }catch(e){}
+  }
 }
 function renderApptList(){
   const list=$('appt-list'),items=$('appt-items');
