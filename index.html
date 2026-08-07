@@ -1095,16 +1095,21 @@ function showAddConfirm(brand){
   const list=$('appt-list');
   if(list) list.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
+function updateAddBtnLabel(){
+  $('add-btn').textContent = appointments.length>0 ? '+ Add Another Appointment' : '+ Add This Appointment';
+}
 function resetBuilder(){
   bBrand=null;bCat=null;bDur=null;bDate=null;bTime=null;
   $('b-brand').value='';
   $('b-cat').innerHTML='<option value="">— Category —</option>';$('b-cat').disabled=true;
   $('b-dur').innerHTML='<option value="">— Duration —</option>';$('b-dur').disabled=true;
   $('mcal').style.display='none';$('tpick').style.display='none';$('add-btn').disabled=true;
+  updateAddBtnLabel();
 }
 function removeAppt(idx){
   appointments.splice(idx,1);renderApptList();updateSummary();
   if(appointments.length===0)$('appt-list').style.display='none';
+  updateAddBtnLabel();
 }
 function renderApptList(){
   const list=$('appt-list'),items=$('appt-items');
