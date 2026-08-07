@@ -1157,6 +1157,29 @@ async function createBookingOnServer(appt, contact){
   return res.json();
 }
 
+// If a booking request errors out (network hiccup, cold start, etc.) it's
+// possible the write actually succeeded on the server and we just never got
+// the response back. Before reporting a hard failure, re-check live
+// availability for that exact slot — if it now shows as booked by this same
+// brand/category, the appointment went through and shouldn't be reported as
+// failed. Always does a fresh fetch (bypassing the cache), since the whole
+// point is to see server state *after* our attempted write.
+async function verifyBookingWasCreated(appt){
+  try{
+    const cacheKey = rep + '|' + appt.date;
+    delete availabilityCache[cacheKey];
+    const liveIntervals = await fetchLiveBusyIntervals(rep, appt.date);
+    return liveIntervals.some(iv =>
+      iv.time === appt.time &&
+      iv.brand === appt.brand &&
+      (format==='virtual' || iv.category === appt.category)
+    );
+  }catch(err){
+    console.error('Could not verify booking status after failure:', err);
+    return false; // can't confirm it succeeded — don't upgrade to a success
+  }
+}
+
 async function submitBooking(){
   const first=$('f-first').value.trim(),last=$('f-last').value.trim();
   const email=$('f-email').value.trim(),store=$('f-store').value.trim();
@@ -1174,7 +1197,12 @@ async function submitBooking(){
       await createBookingOnServer(appt, contact);
     }catch(err){
       console.error(err);
-      failures.push(appt.brand + ' ' + appt.category);
+      const actuallyBooked = await verifyBookingWasCreated(appt);
+      if(!actuallyBooked){
+        failures.push(appt.brand + ' ' + appt.category);
+      }else{
+        console.log('Booking for', appt.brand, appt.category, 'errored but was confirmed on the calendar — not counting as a failure.');
+      }
     }
   }
 
