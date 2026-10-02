@@ -284,6 +284,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
               <option>Faction &amp; Phaenom</option><option>Merrell</option>
               <option>Outdoor Research</option><option>Toad &amp; Co</option>
               <option>Western Mountaineering</option>
+              <option>Business Meeting</option>
             </select>
           </div>
           <div class="bf-field" id="cat-field"><label>Category</label>
@@ -552,6 +553,7 @@ const BRANDS_FULL = {
   'Outdoor Research':       {"Men's":[30,60],"Women's":[30,60],'Accessories':[30],'Full Line':[120]},
   'Toad & Co':              {"Men's":[30],"Women's":[90],'Full Line':[120]},
   'Western Mountaineering': {'Line Showing':[30,60]},
+  'Business Meeting':       {'General':[30,60]},
 };
 // Virtual: brand → duration only (no category)
 const BRANDS_VIRTUAL = Object.fromEntries(
@@ -962,6 +964,9 @@ function conflictKey(brand, category, duration){
 function currentKey(){ return conflictKey(bBrand, bCat, bDur); }
 
 const STACK_LIMIT=3; // max identical (brand+category+duration, same start time) appointments allowed at once
+// Brands that never stack — each booking is a one-on-one meeting, so any
+// overlap (even an identical one) is a real conflict.
+const NO_STACK_BRANDS=new Set(['Business Meeting']);
 
 // Tracks the live intervals + date currently loaded into the time picker so
 // commitAppt() can do a final revalidation right before pushing, in case the
@@ -990,7 +995,7 @@ function evaluateSlot(t, dateStr, intervals){
     // time, not just an overlapping window) — e.g. two reps double-booking
     // the same 5:00-6:00 Outdoor Research Women's appointment. A same-type
     // appointment merely offset in time (4:30 vs 5:00) still conflicts.
-    if(ivKey!==myKey || iv.time!==t){
+    if(ivKey!==myKey || iv.time!==t || NO_STACK_BRANDS.has(bBrand)){
       realConflictLabel = iv.brand===bBrand ? iv.brand+' '+iv.category : iv.brand;
       break;
     } else {
@@ -1009,7 +1014,7 @@ function evaluateSlot(t, dateStr, intervals){
         const aKey=conflictKey(a.brand, a.category, a.duration);
         // Same rule as live data: only the identical start time counts as
         // a valid stack, not just an overlapping window of the same type.
-        if(aKey!==myKey || a.time!==t){
+        if(aKey!==myKey || a.time!==t || NO_STACK_BRANDS.has(bBrand)){
           sessConflictLabel = a.brand===bBrand ? a.brand+' '+a.category : a.brand;
           break;
         } else {
