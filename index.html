@@ -280,11 +280,6 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
           <div class="bf-field"><label>Brand</label>
             <select id="b-brand" onchange="onBrand()">
               <option value="">— Brand —</option>
-              <option>Chaco</option><option>Eagle Creek</option><option>Exped</option>
-              <option>Faction &amp; Phaenom</option><option>Merrell</option>
-              <option>Outdoor Research</option><option>Toad &amp; Co</option>
-              <option>Western Mountaineering</option>
-              <option>Business Meeting</option>
             </select>
           </div>
           <div class="bf-field" id="cat-field"><label>Category</label>
@@ -435,6 +430,9 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
                   <label class="rep-cb"><input type="checkbox" value="pat"> Pat</label>
                   <label class="rep-cb"><input type="checkbox" value="austin"> Austin</label>
                 </div>
+              </div>
+              <div class="af-field" style="margin-top:10px"><label>Brands at This Show <span style="font-weight:300;text-transform:none">(none checked = all brands)</span></label>
+                <div class="rep-checkboxes" id="ns-brands"></div>
               </div>
               <button class="add-row-btn" onclick="addShow()">+ Add Show</button>
             </div>
@@ -726,7 +724,7 @@ function renderRepStep(){
       const repNames=show.reps.map(r=>ALL_REPS[r]?.name.split(' ')[0]).join(', ');
       const div=document.createElement('div');
       div.className='show-card'+(selectedShow?.id===show.id?' selected':'');
-      div.innerHTML=`<div class="show-name">${show.name}</div><div class="show-meta">${dateRange} · ${show.location}</div><div class="show-reps">Attending: ${repNames}</div>`;
+      div.innerHTML=`<div class="show-name">${show.name}</div><div class="show-meta">${dateRange} · ${show.location}</div><div class="show-reps">Attending: ${repNames}</div>${show.brands?.length?`<div class="show-meta">Brands: ${show.brands.join(', ')}</div>`:''}`;
       div.onclick=()=>{
         document.querySelectorAll('.show-card').forEach(c=>c.classList.remove('selected'));
         div.classList.add('selected'); selectedShow=show; rep=null;
@@ -782,7 +780,24 @@ function setupBuilderForFormat(){
   // Virtual hides category, shows brand + duration only in 2 cols
   catField.style.display=isVirtual?'none':'';
   $('bf-full-row').className='bf-row '+(isVirtual?'cols2':'cols3');
+  populateBrandSelect();
   resetBuilder();
+}
+
+// Brands bookable in the current context. A trade show with a non-empty
+// brands list limits the dropdown to those; shows without one (including
+// older saved shows) allow every brand.
+function getAllowedBrands(){
+  const all=Object.keys(BRANDS_FULL);
+  if(format==='trade-show'&&selectedShow&&Array.isArray(selectedShow.brands)&&selectedShow.brands.length>0){
+    return all.filter(b=>selectedShow.brands.includes(b));
+  }
+  return all;
+}
+function populateBrandSelect(){
+  const sel=$('b-brand');
+  sel.innerHTML='<option value="">— Brand —</option>';
+  getAllowedBrands().forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;sel.appendChild(o)});
 }
 
 function onBrand(){
@@ -1117,6 +1132,8 @@ function resetBuilder(){
   $('b-dur').innerHTML='<option value="">— Duration —</option>';$('b-dur').disabled=true;
   $('mcal').style.display='none';$('tpick').style.display='none';
   syncAddBtn(false);
+  const allowed=getAllowedBrands();
+  if(allowed.length===1){$('b-brand').value=allowed[0];onBrand();}
 }
 function removeAppt(idx){
   appointments.splice(idx,1);renderApptList();updateSummary();
@@ -1290,7 +1307,7 @@ function adminLogin(){
 }
 function showAdminContent(){
   $('admin-login-pane').style.display='none';$('admin-content').style.display='block';
-  renderAdminShows();renderAdminSeasons();renderAdminBlackouts();loadHoursForm();
+  renderAdminShows();renderAdminSeasons();renderAdminBlackouts();loadHoursForm();renderShowBrandPicker();
 }
 function adminTab(el,name){
   document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
@@ -1335,7 +1352,7 @@ function renderAdminShows(){
     }).join(' · ');
     const tzLabel=show.timezone==='America/Denver'?'Mountain Time':show.timezone==='America/Los_Angeles'?'Pacific Time':show.timezone||'';
     const div=document.createElement('div');div.className='config-item';
-    div.innerHTML=`<div class="config-item-body"><div class="ci-title">${show.name}</div><div class="ci-detail">${dateRange} · ${show.location} · ${tzLabel}</div><div class="ci-detail" style="margin-top:3px">${hoursStr}</div><div class="ci-reps">Attending: ${repNames}</div></div><button class="del-btn" onclick="deleteShow(${i})">Remove</button>`;
+    div.innerHTML=`<div class="config-item-body"><div class="ci-title">${show.name}</div><div class="ci-detail">${dateRange} · ${show.location} · ${tzLabel}</div><div class="ci-detail" style="margin-top:3px">${hoursStr}</div><div class="ci-reps">Attending: ${repNames}</div><div class="ci-detail" style="margin-top:3px" id="ci-brands-${i}">Brands: ${show.brands?.length?show.brands.join(', '):'All'}</div><details style="margin-top:6px"><summary style="font-size:13px;color:var(--olive-dark);cursor:pointer">Edit brands</summary><div class="rep-checkboxes">${brandCheckboxesHtml(show.brands||[],`onchange="toggleShowBrand(${i},this.value,this.checked)"`)}</div></details></div><button class="del-btn" onclick="deleteShow(${i})">Remove</button>`;
     list.appendChild(div);
   });
 }
@@ -1344,6 +1361,7 @@ function addShow(){
   const start=$('ns-start').value,end=$('ns-end').value;
   const timezone=$('ns-tz').value;
   const reps=[...$('ns-reps').querySelectorAll('input:checked')].map(c=>c.value);
+  const brands=[...$('ns-brands').querySelectorAll('input:checked')].map(c=>c.value);
   if(!name||!start||!end||reps.length===0){alert('Please fill in all fields and select at least one rep.');return}
   const dateHours={};
   let cur=new Date(start+'T12:00:00');
@@ -1353,12 +1371,27 @@ function addShow(){
     dateHours[d]={open:$('sh-open-'+d)?.value||'09:00',close:$('sh-close-'+d)?.value||'17:00'};
     cur.setDate(cur.getDate()+1);
   }
-  CFG.tradeShows.push({id:'ts'+Date.now(),name,location:loc,timezone,dateHours,reps});
+  CFG.tradeShows.push({id:'ts'+Date.now(),name,location:loc,timezone,dateHours,reps,brands});
   $('ns-name').value='';$('ns-loc').value='';$('ns-start').value='';$('ns-end').value='';
   $('ns-tz').value='America/Los_Angeles';
   $('ns-date-hours').style.display='none';$('ns-date-hours-rows').innerHTML='';
   $('ns-reps').querySelectorAll('input').forEach(c=>c.checked=false);
+  $('ns-brands').querySelectorAll('input').forEach(c=>c.checked=false);
   renderAdminShows();renderFormatGrid();
+}
+function escAttr(v){return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+function brandCheckboxesHtml(checked,extraAttr){
+  return Object.keys(BRANDS_FULL).map(b=>`<label class="rep-cb"><input type="checkbox" value="${escAttr(b)}"${checked.includes(b)?' checked':''} ${extraAttr||''}> ${escAttr(b)}</label>`).join('');
+}
+function renderShowBrandPicker(){ $('ns-brands').innerHTML=brandCheckboxesHtml([]); }
+// Edits an existing show's brands in place; persists on Save Changes.
+function toggleShowBrand(i,brand,on){
+  const show=CFG.tradeShows[i]; if(!show)return;
+  const set=new Set(show.brands||[]);
+  on?set.add(brand):set.delete(brand);
+  show.brands=Object.keys(BRANDS_FULL).filter(b=>set.has(b));
+  // Update the label only — a full re-render would collapse the open editor.
+  const lbl=$('ci-brands-'+i); if(lbl)lbl.textContent='Brands: '+(show.brands.length?show.brands.join(', '):'All');
 }
 function deleteShow(i){CFG.tradeShows.splice(i,1);renderAdminShows();renderFormatGrid()}
 
