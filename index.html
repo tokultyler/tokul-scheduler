@@ -102,10 +102,6 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
 .add-appt-btn{margin-top:16px;width:100%;padding:13px;background:var(--olive);color:white;border:none;border-radius:2px;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;letter-spacing:.05em;cursor:pointer;transition:background .16s;text-transform:uppercase}
 .add-appt-btn:hover{background:var(--olive-dark)}
 .add-appt-btn:disabled{background:#c8c8c8;cursor:not-allowed}
-.bf-help{font-size:.78rem;color:var(--bark);margin:-4px 0 14px;line-height:1.4}
-.add-confirm{display:none;align-items:center;gap:8px;margin-top:10px;padding:10px 14px;background:#e8f0e3;border:1.5px solid var(--sage);border-radius:2px;font-size:.82rem;color:var(--pine);font-weight:600;animation:fadeUp .25s ease}
-.add-confirm.show{display:flex}
-.appt-item.appt-new{animation:fadeUp .3s ease}
 .appt-list{margin-top:22px;display:none}
 .appt-list-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .appt-list-ttl{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;color:var(--charcoal);text-transform:uppercase;letter-spacing:.05em}
@@ -118,6 +114,8 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
 .ai-time{font-size:13px;font-weight:600;color:var(--olive-dark);white-space:nowrap;text-align:right;line-height:1.5}
 .ai-rm{cursor:pointer;color:#bbb;font-size:18px;line-height:1;transition:color .14s;flex-shrink:0;margin-left:4px}
 .ai-rm:hover{color:var(--red)}
+.add-another{display:flex;align-items:center;gap:9px;padding:13px 15px;border:1.5px dashed var(--border);border-radius:2px;cursor:pointer;color:var(--muted);font-size:15px;transition:all .16s;margin-top:3px}
+.add-another:hover{border-color:var(--olive);color:var(--olive)}
 .legend{display:flex;flex-direction:column;gap:6px;margin-top:12px}
 .li{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
 .ld{width:11px;height:11px;border-radius:1px;flex-shrink:0}
@@ -135,8 +133,6 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
 .btn-next{flex:1;padding:12px 22px;background:var(--olive);border:none;border-radius:2px;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;letter-spacing:.05em;color:white;cursor:pointer;transition:background .16s;text-transform:uppercase}
 .btn-next:hover{background:var(--olive-dark)}
 .btn-next:disabled{background:#c8c8c8;cursor:not-allowed}
-.btn-add-another{padding:12px 20px;border:1.5px solid var(--olive);border-radius:2px;background:none;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;letter-spacing:.04em;color:var(--olive-dark);cursor:pointer;transition:all .16s;text-transform:uppercase}
-.btn-add-another:hover{background:var(--olive-faint)}
 .val-error{color:var(--red);font-size:14px;margin-top:8px;display:none}
 .val-error.show{display:block}
 .sidebar{display:flex;flex-direction:column;gap:16px}
@@ -274,12 +270,15 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
       <p class="subtitle">Add each brand with its own date and time.</p>
       <div class="builder-form" id="builder-form">
         <h4>Add Appointment</h4>
-        <p class="bf-help">Add as many appointments as you'd like — each appears in the list below.</p>
         <!-- Virtual: brand + duration only. Showroom/Trade: brand + category + duration -->
         <div class="bf-row cols3" id="bf-full-row">
           <div class="bf-field"><label>Brand</label>
             <select id="b-brand" onchange="onBrand()">
               <option value="">— Brand —</option>
+              <option>Chaco</option><option>Eagle Creek</option><option>Exped</option>
+              <option>Faction &amp; Phaenom</option><option>Merrell</option>
+              <option>Outdoor Research</option><option>Toad &amp; Co</option>
+              <option>Western Mountaineering</option>
             </select>
           </div>
           <div class="bf-field" id="cat-field"><label>Category</label>
@@ -314,19 +313,21 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
         </div>
         <button class="add-appt-btn" id="add-btn" onclick="commitAppt()" disabled>+ Add to Schedule</button>
       </div>
-      <div class="add-confirm" id="add-confirm">✓ <span id="add-confirm-text">Appointment added below.</span> Continue when you're ready.</div>
       <div class="appt-list" id="appt-list">
         <div class="appt-list-hdr">
-          <span class="appt-list-ttl">Your Scheduled Appointments</span>
+          <span class="appt-list-ttl">Scheduled Appointments</span>
           <span class="appt-badge" id="appt-count">0</span>
         </div>
         <div id="appt-items"></div>
+        <div class="add-another" onclick="startAnother()">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v6M5 8h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Add another brand
+        </div>
       </div>
       <div class="val-error" id="err-appts">Please add at least one appointment.</div>
       <div class="btn-row">
         <button class="btn-back" onclick="goStep(2)">← Back</button>
-        <button class="btn-add-another" id="add-another-btn" onclick="addAnotherAppt()" style="display:none">+ Add Another Appointment</button>
-        <button class="btn-next" onclick="goStep(4)">Finalize Your Booking →</button>
+        <button class="btn-next" onclick="goStep(4)">Continue →</button>
       </div>
     </div>
 
@@ -431,9 +432,6 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
                   <label class="rep-cb"><input type="checkbox" value="austin"> Austin</label>
                 </div>
               </div>
-              <div class="af-field" style="margin-top:10px"><label>Brands at This Show <span style="font-weight:300;text-transform:none">(none checked = all brands)</span></label>
-                <div class="rep-checkboxes" id="ns-brands"></div>
-              </div>
               <button class="add-row-btn" onclick="addShow()">+ Add Show</button>
             </div>
           </div>
@@ -511,15 +509,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
 
 <script>
 // ══════════════════════════════════════════════════════════════
-// API
-// ══════════════════════════════════════════════════════════════
-const API_BASE = 'https://tokul-scheduler-func-a0a3bpdwhqethzep.westus-01.azurewebsites.net/api';
-
-// ══════════════════════════════════════════════════════════════
 // CONFIG
-// These are fallback/default values used only if the live config
-// fetch from the backend fails (e.g. network issue). Once the page
-// loads, loadConfigFromServer() overwrites this with real data.
 // ══════════════════════════════════════════════════════════════
 let CFG = {
   tradeShows: [
@@ -551,7 +541,6 @@ const BRANDS_FULL = {
   'Outdoor Research':       {"Men's":[30,60],"Women's":[30,60],'Accessories':[30],'Full Line':[120]},
   'Toad & Co':              {"Men's":[30],"Women's":[90],'Full Line':[120]},
   'Western Mountaineering': {'Line Showing':[30,60]},
-  'Business Meeting':       {'General':[30,60]},
 };
 // Virtual: brand → duration only (no category)
 const BRANDS_VIRTUAL = Object.fromEntries(
@@ -566,15 +555,31 @@ const ALL_REPS = {
 };
 const SHOWROOM_REPS = ['paul','austin'];
 
-// Real rep availability is now fetched live from the Azure Function
-// backend (see fetchLiveBusySlots) instead of using mock data here.
+// Mock booked slots. Each slot stores objects: {brand, category}
+// 'FULL' string still means fully blocked regardless of brand/category.
+// Virtual bookings store category as 'Virtual' — conflict is brand-only.
+const BOOKED = {
+  paul:  {'2026-05-05':{
+    '09:00':[{brand:'Merrell',category:'Line Showing'}],
+    '10:00':[{brand:'Toad & Co',category:"Men's"}],
+    '14:00':['FULL']}},
+  tyler: {'2026-05-05':{
+    '09:30':[{brand:'Toad & Co',category:"Women's"}],
+    '13:00':[{brand:'Merrell',category:'Line Showing'}]}},
+  pat:   {'2026-05-27':{
+    '10:00':[{brand:'Western Mountaineering',category:'Line Showing'}],
+    '14:30':['FULL']}},
+  austin:{'2026-06-01':{
+    '09:00':[{brand:'Outdoor Research',category:"Men's"}],
+    '13:30':[{brand:'Toad & Co',category:"Men's"}]}},
+};
 
 const MONS_S=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONS_L=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 // ── STATE ─────────────────────────────────────────────────────
 let format=null,selectedShow=null,rep=null,appointments=[],curStep=1;
-let calMonth=(()=>{const t=new Date();return new Date(t.getFullYear(),t.getMonth(),1)})();
+let calMonth=new Date(2026,4,1);
 let bBrand=null,bCat=null,bDur=null,bDate=null,bTime=null;
 
 // ── HELPERS ───────────────────────────────────────────────────
@@ -631,23 +636,11 @@ function isVirtualAvailable(dateStr){
 }
 
 // ── NAV ───────────────────────────────────────────────────────
-// Guards against a rep left over from a prior format/show selection that
-// isn't actually valid for the current one (e.g. Tyler was picked for a
-// Trade Show, then the format was switched back to Showroom, where only
-// Paul and Austin are available).
-function repValidForFormat(){
-  if(!rep)return false;
-  if(format==='showroom')return SHOWROOM_REPS.includes(rep);
-  if(format==='trade-show')return !!selectedShow && selectedShow.reps.includes(rep);
-  return !!ALL_REPS[rep];
-}
 function goStep(n){
   if(n>curStep){
     if(curStep===1&&!format){$('err-format').classList.add('show');return}
-    if(curStep===2){
-      if(!repValidForFormat()){rep=null;$('err-rep').classList.add('show');return}
-    }
-    if(curStep===3&&appointments.length===0){$('err-appts').textContent='Please add at least one appointment.';$('err-appts').classList.add('show');return}
+    if(curStep===2&&!rep){$('err-rep').classList.add('show');return}
+    if(curStep===3&&appointments.length===0){$('err-appts').classList.add('show');return}
   }
   document.querySelectorAll('.val-error').forEach(e=>e.classList.remove('show'));
   document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
@@ -690,17 +683,8 @@ function renderFormatGrid(){
 
 // ── STEP 2: REP ───────────────────────────────────────────────
 function renderRepStep(){
-  if(!repValidForFormat()){
-    rep=null;
-    $('sum-rep').textContent='Not selected'; $('sum-rep').classList.add('empty');
-  }
   const sp=$('show-picker'),rw=$('rep-grid-wrap');
   sp.style.display='none'; rw.style.display='block'; $('rep-grid').innerHTML='';
-  // These section labels are only relevant for the trade-show 2-step picker.
-  // Always clear any previously-injected copies first so switching formats
-  // back and forth never leaves duplicates or stale labels behind.
-  document.getElementById('ts-show-label')?.remove();
-  document.getElementById('ts-rep-label')?.remove();
   if(format==='trade-show'){
     const today=todayStr();
     const shows=CFG.tradeShows.filter(s=>Object.keys(s.dateHours).some(d=>d>=today));
@@ -710,7 +694,6 @@ function renderRepStep(){
 
     // Section 1 label
     const lbl1=document.createElement('div');
-    lbl1.id='ts-show-label';
     lbl1.className='ts-section-label tsl-show';
     lbl1.innerHTML='<span class="tsl-num">1</span> Select Trade Show';
     sg.before(lbl1);
@@ -724,22 +707,21 @@ function renderRepStep(){
       const repNames=show.reps.map(r=>ALL_REPS[r]?.name.split(' ')[0]).join(', ');
       const div=document.createElement('div');
       div.className='show-card'+(selectedShow?.id===show.id?' selected':'');
-      div.innerHTML=`<div class="show-name">${show.name}</div><div class="show-meta">${dateRange} · ${show.location}</div><div class="show-reps">Attending: ${repNames}</div>${show.brands?.length?`<div class="show-meta">Brands: ${show.brands.join(', ')}</div>`:''}`;
+      div.innerHTML=`<div class="show-name">${show.name}</div><div class="show-meta">${dateRange} · ${show.location}</div><div class="show-reps">Attending: ${repNames}</div>`;
       div.onclick=()=>{
         document.querySelectorAll('.show-card').forEach(c=>c.classList.remove('selected'));
         div.classList.add('selected'); selectedShow=show; rep=null;
-        rw.classList.add('visible');
+        const repSec=document.getElementById('ts-rep-section');
+        repSec.classList.add('visible');
         renderRepCards(show.reps);
       };
       sg.appendChild(div);
     });
 
-    // Section 2 label + rep grid — injected after show grid. The wrapper's
-    // id stays 'rep-grid-wrap' always; only classes change so future
-    // getElementById('rep-grid-wrap') lookups keep working.
+    // Section 2 label + rep grid — injected after show grid
+    rw.id='ts-rep-section';
     rw.className='ts-rep-section'+(selectedShow?' visible':'');
     const lbl2=document.createElement('div');
-    lbl2.id='ts-rep-label';
     lbl2.className='ts-section-label tsl-rep';
     lbl2.innerHTML='<span class="tsl-num">2</span> Select Your Rep';
     rw.insertBefore(lbl2, rw.firstChild);
@@ -747,11 +729,14 @@ function renderRepStep(){
     if(selectedShow)renderRepCards(selectedShow.reps);
     else $('rep-grid').innerHTML='';
   } else if(format==='showroom'){
-    rw.className='';
+    rw.id='rep-grid-wrap'; rw.className='';
+    // Remove any injected section label from prior trade show render
+    rw.querySelector('.ts-section-label')?.remove();
     $('rep-subtitle').textContent='Showroom appointments are with Paul or Austin';
     renderRepCards(SHOWROOM_REPS);
   } else {
-    rw.className='';
+    rw.id='rep-grid-wrap'; rw.className='';
+    rw.querySelector('.ts-section-label')?.remove();
     $('rep-subtitle').textContent='Choose the Tokul Creek rep assigned to your account';
     renderRepCards(Object.keys(ALL_REPS));
   }
@@ -780,24 +765,7 @@ function setupBuilderForFormat(){
   // Virtual hides category, shows brand + duration only in 2 cols
   catField.style.display=isVirtual?'none':'';
   $('bf-full-row').className='bf-row '+(isVirtual?'cols2':'cols3');
-  populateBrandSelect();
   resetBuilder();
-}
-
-// Brands bookable in the current context. A trade show with a non-empty
-// brands list limits the dropdown to those; shows without one (including
-// older saved shows) allow every brand.
-function getAllowedBrands(){
-  const all=Object.keys(BRANDS_FULL);
-  if(format==='trade-show'&&selectedShow&&Array.isArray(selectedShow.brands)&&selectedShow.brands.length>0){
-    return all.filter(b=>selectedShow.brands.includes(b));
-  }
-  return all;
-}
-function populateBrandSelect(){
-  const sel=$('b-brand');
-  sel.innerHTML='<option value="">— Brand —</option>';
-  getAllowedBrands().forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;sel.appendChild(o)});
 }
 
 function onBrand(){
@@ -805,7 +773,7 @@ function onBrand(){
   const cs=$('b-cat'),ds2=$('b-dur');
   cs.innerHTML='<option value="">— Category —</option>'; ds2.innerHTML='<option value="">— Duration —</option>';
   cs.disabled=true; ds2.disabled=true;
-  $('mcal').style.display='none'; $('tpick').style.display='none'; syncAddBtn(false);
+  $('mcal').style.display='none'; $('tpick').style.display='none'; $('add-btn').disabled=true;
   if(!bBrand)return;
   const isVirtual=format==='virtual';
   if(isVirtual){
@@ -822,7 +790,7 @@ function onBrand(){
 function onCat(){
   bCat=$('b-cat').value||null; bDur=null; bDate=null; bTime=null;
   const ds2=$('b-dur'); ds2.innerHTML='<option value="">— Duration —</option>'; ds2.disabled=true;
-  $('mcal').style.display='none'; $('tpick').style.display='none'; syncAddBtn(false);
+  $('mcal').style.display='none'; $('tpick').style.display='none'; $('add-btn').disabled=true;
   if(!bCat)return;
   const durs=BRANDS_FULL[bBrand][bCat];
   durs.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d+' min';ds2.appendChild(o)});
@@ -831,7 +799,7 @@ function onCat(){
 }
 function onDur(){
   bDur=$('b-dur').value?parseInt($('b-dur').value):null; bDate=null; bTime=null;
-  $('tpick').style.display='none'; syncAddBtn(false);
+  $('tpick').style.display='none'; $('add-btn').disabled=true;
   if(!bDur){$('mcal').style.display='none';return}
   $('mcal').style.display='block'; renderMCal();
 }
@@ -909,172 +877,108 @@ function getEventTimezone(){
   return{tz, label: tz==='America/Denver'?'Mountain Time (MT)':'Pacific Time (PT)'};
 }
 
-// Cache of live availability fetches, keyed by "rep|date", so re-picking
-// the same date doesn't re-fetch. Cleared when the rep changes (not needed
-// currently since rep is fixed per session, but harmless to keep simple).
-const availabilityCache = {};
-
-// Fetches real busy blocks for a rep/date from the backend and returns them
-// as a list of intervals: { time, duration, brand, category }. Events our
-// own booking flow created carry brand/category tags (Outlook categories);
-// anything else (personal meetings, vacation, etc.) has brand=null and will
-// never match a conflictKey, so it always fully blocks.
-async function fetchLiveBusyIntervals(repKey, dateStr){
-  const cacheKey = repKey + '|' + dateStr;
-  if(availabilityCache[cacheKey]) return availabilityCache[cacheKey];
-
-  const res = await fetch(API_BASE + '/availability?rep=' + encodeURIComponent(repKey) + '&date=' + encodeURIComponent(dateStr));
-  if(!res.ok) throw new Error('Availability fetch failed: ' + res.status);
-  const data = await res.json();
-
-  const intervals = (data.busy || []).map(block=>{
-    // block.start/end are ISO datetimes in the rep's local timezone, e.g. "2026-07-20T10:00:00"
-    const startTime = block.start.slice(11,16);
-    const startMins = timeStrToMins(startTime);
-    const endMins = timeStrToMins(block.end.slice(11,16));
-    return {
-      time: startTime,
-      duration: Math.max(endMins - startMins, 0),
-      brand: block.brand || null,
-      category: block.category || null,
-      subject: block.subject || 'Unavailable'
-    };
-  });
-
-  availabilityCache[cacheKey] = intervals;
-  return intervals;
-}
-function timeStrToMins(t){const[h,m]=t.split(':');return parseInt(h)*60+parseInt(m)}
-
-async function pickDate(dateStr,el){
+function pickDate(dateStr,el){
   document.querySelectorAll('.mc-day').forEach(d=>d.classList.remove('mc-sel'));
-  el.classList.add('mc-sel'); bDate=dateStr; bTime=null; syncAddBtn(false);
+  el.classList.add('mc-sel'); bDate=dateStr; bTime=null; $('add-btn').disabled=true;
   const[y,mo,d]=dateStr.split('-');
   $('tp-date').textContent=MONS_S[parseInt(mo)-1]+' '+parseInt(d)+', '+y;
   const{label}=getEventTimezone();
   $('tp-tz-text').textContent='Times shown in '+label;
-
-  $('tpick').style.display='block';
-  const grid=$('tp-grid');
-  grid.innerHTML='<div class="no-slots">Checking availability...</div>';
-
-  try{
-    const liveIntervals = await fetchLiveBusyIntervals(rep, dateStr);
-    renderTimePicker(dateStr, liveIntervals);
-  }catch(err){
-    console.error('Could not load live availability:', err);
-    grid.innerHTML='<div class="no-slots">Could not load availability — please try again.</div>';
-  }
+  renderTimePicker(dateStr); $('tpick').style.display='block';
 }
 
 // ── TIME PICKER ───────────────────────────────────────────────
-// Conflict key includes brand + category + duration (for showroom/trade-show)
-// so two appointments only stack when they're the exact same type and length,
-// e.g. two 90-min Outdoor Research Women's appointments. Different category
-// or different duration for the same brand is treated as a real conflict.
-// Virtual has no category distinction, but still requires matching duration.
-function conflictKey(brand, category, duration){
-  return format==='virtual' ? brand+'||'+duration : brand+'||'+category+'||'+duration;
+// Conflict key: brand+category for showroom/trade-show, brand-only for virtual
+function conflictKey(brand, category){
+  return format==='virtual' ? brand : brand+'||'+category;
 }
-function currentKey(){ return conflictKey(bBrand, bCat, bDur); }
+function currentKey(){ return conflictKey(bBrand, bCat); }
 
-const STACK_LIMIT=3; // max identical (brand+category+duration, same start time) appointments allowed at once
-// Brands that never stack — each booking is a one-on-one meeting, so any
-// overlap (even an identical one) is a real conflict.
-const NO_STACK_BRANDS=new Set(['Business Meeting']);
-
-// Tracks the live intervals + date currently loaded into the time picker so
-// commitAppt() can do a final revalidation right before pushing, in case the
-// picker's rendered state ever goes stale relative to bBrand/bCat/bDur/bTime.
-let currentLiveIntervals=[], currentLiveDate=null;
-
-// Evaluates one slot for the current builder selection (bBrand/bCat/bDur)
-// against real calendar intervals and appointments already added this
-// session. Shared by renderTimePicker (for display) and commitAppt (as a
-// final guard) so the two can never disagree.
-function evaluateSlot(t, dateStr, intervals){
-  const myKey=currentKey();
-
-  // Check against real calendar events for this rep/day
-  let realConflictLabel=null, realStackCount=0, isFull=false;
-  for(const iv of intervals){
-    if(!overlaps(t,bDur,iv.time,iv.duration))continue;
-    if(iv.brand===null){
-      // Untagged real event (meeting, vacation, etc.) — always fully blocks
-      realConflictLabel = iv.subject || 'Unavailable';
-      isFull = true;
-      break;
-    }
-    const ivKey=conflictKey(iv.brand, iv.category, iv.duration);
-    // Stacking only applies when it's the exact same slot (identical start
-    // time, not just an overlapping window) — e.g. two reps double-booking
-    // the same 5:00-6:00 Outdoor Research Women's appointment. A same-type
-    // appointment merely offset in time (4:30 vs 5:00) still conflicts.
-    if(ivKey!==myKey || iv.time!==t || NO_STACK_BRANDS.has(bBrand)){
-      realConflictLabel = iv.brand===bBrand ? iv.brand+' '+iv.category : iv.brand;
-      break;
-    } else {
-      realStackCount++;
-    }
+function getCloseTimeForDate(dateStr){
+  // Returns the close time string for the current format/date
+  if(format==='trade-show'&&selectedShow){
+    const h=selectedShow.dateHours[dateStr];
+    return h?h.close:null;
   }
-
-  // Check against appointments added earlier in this same booking session —
-  // e.g. an 11:00 Chaco appointment already staged must block (or stack
-  // with, if identical) an 11:00 Exped appointment for the same date.
-  let sessConflictLabel=null, sessStackCount=0;
-  if(!realConflictLabel){
-    for(const a of appointments){
-      if(a.date!==dateStr)continue;
-      if(overlaps(t,bDur,a.time,a.duration)){
-        const aKey=conflictKey(a.brand, a.category, a.duration);
-        // Same rule as live data: only the identical start time counts as
-        // a valid stack, not just an overlapping window of the same type.
-        if(aKey!==myKey || a.time!==t || NO_STACK_BRANDS.has(bBrand)){
-          sessConflictLabel = a.brand===bBrand ? a.brand+' '+a.category : a.brand;
-          break;
-        } else {
-          sessStackCount++;
-        }
-      }
-    }
-  }
-
-  const totalStackCount = realStackCount + sessStackCount;
-  const stackFull = !realConflictLabel && !sessConflictLabel && totalStackCount >= STACK_LIMIT;
-  const isConflict=!!realConflictLabel||!!sessConflictLabel||stackFull;
-  const conflictLabel=realConflictLabel||sessConflictLabel||(bBrand+' '+bCat);
-  const isStacking=!isConflict&&totalStackCount>0;
-
-  return {isFull, isConflict, conflictLabel, isStacking, totalStackCount, stackFull};
+  return CFG.defaultHours.close;
 }
 
-function renderTimePicker(dateStr, liveIntervals){
+function renderTimePicker(dateStr){
   const grid=$('tp-grid'); grid.innerHTML='';
   const slots=getSlotsForDate(dateStr);
-  currentLiveIntervals = liveIntervals || [];
-  currentLiveDate = dateStr;
   if(slots.length===0){
     grid.innerHTML='<div class="no-slots">No available slots for this date.</div>'; return;
   }
-  const intervals = currentLiveIntervals;
+  const closeTime=getCloseTimeForDate(dateStr);
+  const repBooked=((BOOKED[rep]||{})[dateStr])||{};
+  const myKey=currentKey();
 
   slots.forEach(t=>{
     const el=document.createElement('div'); el.className='tp-slot';
-    const{isFull,isConflict,conflictLabel,isStacking,totalStackCount,stackFull}=evaluateSlot(t,dateStr,intervals);
+
+    // Block slot if appointment duration runs past the day's close time
+    if(closeTime && toMins(t)+bDur > toMins(closeTime)){
+      el.classList.add('tp-blk');
+      el.innerHTML=fmt(t)+'<span class="tp-note">Too late for '+bDur+'min</span>';
+      grid.appendChild(el);
+      return;
+    }
+
+    const existing=repBooked[t]||[];
+    const isFull=existing.includes('FULL');
+
+    let realConflictLabel=null, realIsStack=false;
+    if(!isFull){
+      for(const[bt,entries] of Object.entries(repBooked)){
+        if(entries.includes('FULL'))continue;
+        if(overlaps(t,bDur,bt,30)){
+          for(const e of entries){
+            const eKey=conflictKey(e.brand, e.category);
+            if(eKey!==myKey){
+              // Different brand or same brand different category — conflict
+              realConflictLabel = e.brand===bBrand
+                ? e.brand+' '+e.category  // same brand, diff cat: show category
+                : e.brand;                // diff brand: show brand name
+              break;
+            } else {
+              realIsStack=true;           // exact same brand+category — stack OK
+            }
+          }
+        }
+        if(realConflictLabel)break;
+      }
+    }
+
+    let sessConflictLabel=null, sessIsStack=false;
+    for(const a of appointments){
+      if(a.date!==dateStr)continue;
+      if(overlaps(t,bDur,a.time,a.duration)){
+        const aKey=conflictKey(a.brand, a.category);
+        if(aKey!==myKey){
+          sessConflictLabel = a.brand===bBrand
+            ? a.brand+' '+a.category
+            : a.brand;
+          break;
+        } else {
+          sessIsStack=true;
+        }
+      }
+    }
+
+    const isConflict=!!realConflictLabel||!!sessConflictLabel;
+    const conflictLabel=realConflictLabel||sessConflictLabel;
+    const isStacking=!isFull&&!isConflict&&(realIsStack||sessIsStack);
 
     if(isFull){
       el.classList.add('tp-blk');
       el.innerHTML=fmt(t)+'<span class="tp-note">Unavailable</span>';
-    } else if(stackFull){
-      el.classList.add('tp-con');
-      el.innerHTML=fmt(t)+'<span class="tp-note">'+STACK_LIMIT+' already booked</span>';
     } else if(isConflict){
       el.classList.add('tp-con');
       el.innerHTML=fmt(t)+'<span class="tp-note">'+conflictLabel+' showing</span>';
     } else {
       if(isStacking)el.classList.add('tp-stack');
       if(bTime===t)el.classList.add('tp-sel');
-      el.innerHTML=fmt(t)+(isStacking?'<span class="tp-note" style="color:var(--moss)">+ stacking ('+totalStackCount+'/'+STACK_LIMIT+')</span>':'');
+      el.innerHTML=fmt(t)+(isStacking?'<span class="tp-note" style="color:var(--moss)">+ stacking</span>':'');
       el.onclick=()=>pickTime(t,el);
     }
     grid.appendChild(el);
@@ -1082,85 +986,28 @@ function renderTimePicker(dateStr, liveIntervals){
 }
 function pickTime(t,el){
   document.querySelectorAll('.tp-slot').forEach(s=>s.classList.remove('tp-sel'));
-  el.classList.add('tp-sel'); bTime=t; syncAddBtn(true); $('err-appts').classList.remove('show');
+  el.classList.add('tp-sel'); bTime=t; $('add-btn').disabled=false; $('err-appts').classList.remove('show');
 }
 
 // ── COMMIT ────────────────────────────────────────────────────
 function commitAppt(){
-  // Final guard: re-check the selected slot against real intervals + session
-  // appointments right before committing, in case anything changed since the
-  // grid was last rendered (e.g. two brands booked back-to-back for the same
-  // rep/day). This must never let a real conflict through even if a stale UI
-  // state somehow allowed the slot to be clicked.
-  if(bDate===currentLiveDate){
-    const check=evaluateSlot(bTime, bDate, currentLiveIntervals);
-    if(check.isFull||check.isConflict){
-      $('err-appts').textContent='That time is no longer available — please pick another.';
-      $('err-appts').classList.add('show');
-      pickDate(bDate, document.querySelector('.mc-day.mc-sel'));
-      return;
-    }
-  }
   // Virtual has no category selection — store 'Virtual' as category
   // but conflict logic uses brand-only key for virtual so this is just for display
   const cat = format==='virtual' ? 'Virtual' : bCat;
-  const addedBrand = bBrand;
   appointments.push({brand:bBrand, category:cat, duration:bDur, date:bDate, time:bTime, format});
-  renderApptList(); updateSummary(); resetBuilder(); collapseBuilder(); showAddConfirm(addedBrand);
-}
-let addConfirmTimer=null;
-function showAddConfirm(brand){
-  const box=$('add-confirm'), txt=$('add-confirm-text');
-  txt.textContent=(brand?brand+' appointment':'Appointment')+' added below.';
-  box.classList.add('show');
-  clearTimeout(addConfirmTimer);
-  addConfirmTimer=setTimeout(()=>box.classList.remove('show'), 4000);
-  const list=$('appt-list');
-  if(list) list.scrollIntoView({behavior:'smooth', block:'nearest'});
-}
-// "+ Add to Schedule" is only ever enabled once a full slot is selected —
-// disabled the rest of the time. Its label never changes; the separate
-// "Add Another Appointment" button (shown once the builder is collapsed)
-// is what invites additional appointments.
-function syncAddBtn(ready){
-  $('add-btn').disabled=!ready;
+  renderApptList(); updateSummary(); resetBuilder();
 }
 function resetBuilder(){
   bBrand=null;bCat=null;bDur=null;bDate=null;bTime=null;
   $('b-brand').value='';
   $('b-cat').innerHTML='<option value="">— Category —</option>';$('b-cat').disabled=true;
   $('b-dur').innerHTML='<option value="">— Duration —</option>';$('b-dur').disabled=true;
-  $('mcal').style.display='none';$('tpick').style.display='none';
-  syncAddBtn(false);
-  const allowed=getAllowedBrands();
-  if(allowed.length===1){$('b-brand').value=allowed[0];onBrand();}
+  $('mcal').style.display='none';$('tpick').style.display='none';$('add-btn').disabled=true;
 }
+function startAnother(){$('builder-form').scrollIntoView({behavior:'smooth',block:'nearest'});resetBuilder()}
 function removeAppt(idx){
   appointments.splice(idx,1);renderApptList();updateSummary();
-  if(appointments.length===0){
-    $('appt-list').style.display='none';
-    // No appointments left — put the builder back so they can start over.
-    $('builder-form').style.display='block';
-    $('add-another-btn').style.display='none';
-  }
-}
-// Collapses the builder after a successful add and surfaces the standalone
-// "Add Another Appointment" button between Back and Finalize instead.
-function collapseBuilder(){
-  $('builder-form').style.display='none';
-  $('add-another-btn').style.display='inline-block';
-}
-// Reopens the builder, scrolls to it, and opens the Brand dropdown so the
-// next step is unambiguous.
-function addAnotherAppt(){
-  $('add-another-btn').style.display='none';
-  $('builder-form').style.display='block';
-  $('builder-form').scrollIntoView({behavior:'smooth', block:'start'});
-  const brandSel=$('b-brand');
-  brandSel.focus();
-  if(typeof brandSel.showPicker==='function'){
-    try{ brandSel.showPicker(); }catch(e){}
-  }
+  if(appointments.length===0)$('appt-list').style.display='none';
 }
 function renderApptList(){
   const list=$('appt-list'),items=$('appt-items');
@@ -1168,10 +1015,9 @@ function renderApptList(){
   list.style.display='block';$('appt-count').textContent=appointments.length;
   const sorted=[...appointments].map((a,i)=>({...a,idx:i})).sort((a,b)=>a.date!==b.date?(a.date<b.date?-1:1):(a.time<b.time?-1:1));
   items.innerHTML='';
-  const lastIdx=appointments.length-1;
   sorted.forEach(a=>{
     const[y,mo,d]=a.date.split('-');
-    const div=document.createElement('div');div.className='appt-item'+(a.idx===lastIdx?' appt-new':'');
+    const div=document.createElement('div');div.className='appt-item';
     div.innerHTML=`<div class="ai-icon">📋</div><div class="ai-body"><div class="ai-brand">${a.brand}</div><div class="ai-detail">${a.category} · ${a.duration} min</div></div><div class="ai-time">${MONS_S[parseInt(mo)-1]} ${parseInt(d)}, ${y}<br>${fmt(a.time)}</div><div class="ai-rm" onclick="removeAppt(${a.idx})">×</div>`;
     items.appendChild(div);
   });
@@ -1187,101 +1033,17 @@ function updateSummary(){
 }
 
 // ── SUBMIT ────────────────────────────────────────────────────
-// Creates a real Outlook calendar event for one appointment via the
-// backend. Computes the end time from start time + duration.
-async function createBookingOnServer(appt, contact){
-  const{tz}=getEventTimezone();
-  const endTime=addMins(appt.time, appt.duration);
-  const res = await fetch(API_BASE + '/booking', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({
-      rep: rep,
-      start: appt.date + 'T' + appt.time + ':00',
-      end: appt.date + 'T' + endTime + ':00',
-      retailerName: contact.store,
-      retailerEmail: contact.email,
-      brand: appt.brand,
-      category: appt.category,
-      timezone: tz, // trade-show timezone overrides rep default — see getEventTimezone()
-      format: appt.brand + ' — ' + appt.category,
-      location: format==='trade-show' ? (selectedShow?.location||'') : format==='showroom' ? 'Tokul Creek Showroom' : 'Virtual / Phone',
-      notes: contact.notes
-    })
-  });
-  if(!res.ok) throw new Error('Booking failed for ' + appt.brand + ' (' + res.status + ')');
-  return res.json();
-}
-
-// If a booking request errors out (network hiccup, cold start, etc.) it's
-// possible the write actually succeeded on the server and we just never got
-// the response back. Before reporting a hard failure, re-check live
-// availability for that exact slot — if it now shows as booked by this same
-// brand/category, the appointment went through and shouldn't be reported as
-// failed. Always does a fresh fetch (bypassing the cache), since the whole
-// point is to see server state *after* our attempted write.
-async function verifyBookingWasCreated(appt){
-  try{
-    const cacheKey = rep + '|' + appt.date;
-    delete availabilityCache[cacheKey];
-    const liveIntervals = await fetchLiveBusyIntervals(rep, appt.date);
-    return liveIntervals.some(iv =>
-      iv.time === appt.time &&
-      iv.brand === appt.brand &&
-      (format==='virtual' || iv.category === appt.category)
-    );
-  }catch(err){
-    console.error('Could not verify booking status after failure:', err);
-    return false; // can't confirm it succeeded — don't upgrade to a success
-  }
-}
-
-async function submitBooking(){
+function submitBooking(){
   const first=$('f-first').value.trim(),last=$('f-last').value.trim();
   const email=$('f-email').value.trim(),store=$('f-store').value.trim();
-  const notes=$('f-notes').value.trim();
   if(!first||!last||!email||!store){$('err-contact').classList.add('show');return}
-
-  const contact={first,last,email,store,notes};
-  const submitBtn=document.querySelector('#step-4 .btn-next');
-  submitBtn.disabled=true; submitBtn.textContent='Booking...';
-  $('err-contact').classList.remove('show');
-
-  const failures=[];
-  for(const appt of appointments){
-    try{
-      await createBookingOnServer(appt, contact);
-    }catch(err){
-      console.error(err);
-      const actuallyBooked = await verifyBookingWasCreated(appt);
-      if(!actuallyBooked){
-        failures.push(appt.brand + ' ' + appt.category);
-      }else{
-        console.log('Booking for', appt.brand, appt.category, 'errored but was confirmed on the calendar — not counting as a failure.');
-      }
-    }
-  }
-
-  submitBtn.disabled=false; submitBtn.textContent='Confirm Booking ✓';
-
-  if(failures.length===appointments.length){
-    // Everything failed — don't show success, let them know and retry
-    $('err-contact').textContent='Could not create any bookings — please check your connection and try again.';
-    $('err-contact').classList.add('show');
-    return;
-  }
-
   document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
   $('success-screen').classList.add('show');
   document.querySelectorAll('.step-pill').forEach(p=>{p.classList.remove('active');p.classList.add('done')});
   $('conf-email').textContent=email;
   const listEl=$('suc-list');
   const fmtLabel=format==='trade-show'?'Trade Show — '+(selectedShow?.name||''):format==='showroom'?'Showroom':'Virtual / Phone';
-  let headerHtml=`<div style="font-size:.71rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--bark);margin-bottom:8px">With ${ALL_REPS[rep]?.name} · ${fmtLabel}</div>`;
-  if(failures.length>0){
-    headerHtml+=`<div style="font-size:.75rem;color:var(--red);margin-bottom:10px">⚠ ${failures.length} appointment(s) could not be booked: ${failures.join(', ')}. Please contact your rep directly for these.</div>`;
-  }
-  listEl.innerHTML=headerHtml;
+  listEl.innerHTML=`<div style="font-size:.71rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--bark);margin-bottom:8px">With ${ALL_REPS[rep]?.name} · ${fmtLabel}</div>`;
   [...appointments].sort((a,b)=>a.date!==b.date?(a.date<b.date?-1:1):(a.time<b.time?-1:1)).forEach(a=>{
     const[y,mo,d]=a.date.split('-');
     const item=document.createElement('div');item.className='suc-appt';
@@ -1307,7 +1069,7 @@ function adminLogin(){
 }
 function showAdminContent(){
   $('admin-login-pane').style.display='none';$('admin-content').style.display='block';
-  renderAdminShows();renderAdminSeasons();renderAdminBlackouts();loadHoursForm();renderShowBrandPicker();
+  renderAdminShows();renderAdminSeasons();renderAdminBlackouts();loadHoursForm();
 }
 function adminTab(el,name){
   document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
@@ -1352,7 +1114,7 @@ function renderAdminShows(){
     }).join(' · ');
     const tzLabel=show.timezone==='America/Denver'?'Mountain Time':show.timezone==='America/Los_Angeles'?'Pacific Time':show.timezone||'';
     const div=document.createElement('div');div.className='config-item';
-    div.innerHTML=`<div class="config-item-body"><div class="ci-title">${show.name}</div><div class="ci-detail">${dateRange} · ${show.location} · ${tzLabel}</div><div class="ci-detail" style="margin-top:3px">${hoursStr}</div><div class="ci-reps">Attending: ${repNames}</div><div class="ci-detail" style="margin-top:3px" id="ci-brands-${i}">Brands: ${show.brands?.length?show.brands.join(', '):'All'}</div><details style="margin-top:6px"><summary style="font-size:13px;color:var(--olive-dark);cursor:pointer">Edit brands</summary><div class="rep-checkboxes">${brandCheckboxesHtml(show.brands||[],`onchange="toggleShowBrand(${i},this.value,this.checked)"`)}</div></details></div><button class="del-btn" onclick="deleteShow(${i})">Remove</button>`;
+    div.innerHTML=`<div class="config-item-body"><div class="ci-title">${show.name}</div><div class="ci-detail">${dateRange} · ${show.location} · ${tzLabel}</div><div class="ci-detail" style="margin-top:3px">${hoursStr}</div><div class="ci-reps">Attending: ${repNames}</div></div><button class="del-btn" onclick="deleteShow(${i})">Remove</button>`;
     list.appendChild(div);
   });
 }
@@ -1361,7 +1123,6 @@ function addShow(){
   const start=$('ns-start').value,end=$('ns-end').value;
   const timezone=$('ns-tz').value;
   const reps=[...$('ns-reps').querySelectorAll('input:checked')].map(c=>c.value);
-  const brands=[...$('ns-brands').querySelectorAll('input:checked')].map(c=>c.value);
   if(!name||!start||!end||reps.length===0){alert('Please fill in all fields and select at least one rep.');return}
   const dateHours={};
   let cur=new Date(start+'T12:00:00');
@@ -1371,27 +1132,11 @@ function addShow(){
     dateHours[d]={open:$('sh-open-'+d)?.value||'09:00',close:$('sh-close-'+d)?.value||'17:00'};
     cur.setDate(cur.getDate()+1);
   }
-  CFG.tradeShows.push({id:'ts'+Date.now(),name,location:loc,timezone,dateHours,reps,brands});
+  CFG.tradeShows.push({id:'ts'+Date.now(),name,location:loc,timezone,dateHours,reps});
   $('ns-name').value='';$('ns-loc').value='';$('ns-start').value='';$('ns-end').value='';
-  $('ns-tz').value='America/Los_Angeles';
   $('ns-date-hours').style.display='none';$('ns-date-hours-rows').innerHTML='';
   $('ns-reps').querySelectorAll('input').forEach(c=>c.checked=false);
-  $('ns-brands').querySelectorAll('input').forEach(c=>c.checked=false);
   renderAdminShows();renderFormatGrid();
-}
-function escAttr(v){return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
-function brandCheckboxesHtml(checked,extraAttr){
-  return Object.keys(BRANDS_FULL).map(b=>`<label class="rep-cb"><input type="checkbox" value="${escAttr(b)}"${checked.includes(b)?' checked':''} ${extraAttr||''}> ${escAttr(b)}</label>`).join('');
-}
-function renderShowBrandPicker(){ $('ns-brands').innerHTML=brandCheckboxesHtml([]); }
-// Edits an existing show's brands in place; persists on Save Changes.
-function toggleShowBrand(i,brand,on){
-  const show=CFG.tradeShows[i]; if(!show)return;
-  const set=new Set(show.brands||[]);
-  on?set.add(brand):set.delete(brand);
-  show.brands=Object.keys(BRANDS_FULL).filter(b=>set.has(b));
-  // Update the label only — a full re-render would collapse the open editor.
-  const lbl=$('ci-brands-'+i); if(lbl)lbl.textContent='Brands: '+(show.brands.length?show.brands.join(', '):'All');
 }
 function deleteShow(i){CFG.tradeShows.splice(i,1);renderAdminShows();renderFormatGrid()}
 
@@ -1446,7 +1191,7 @@ function addBlackout(){
 }
 function deleteBlackout(i){CFG.blackouts.splice(i,1);renderAdminBlackouts()}
 
-async function saveConfig(){
+function saveConfig(){
   CFG.defaultHours={
     open:$('h-open').value,close:$('h-close').value,
     lunchStart:$('h-lunch-start').value,lunchEnd:$('h-lunch-end').value,
@@ -1458,86 +1203,17 @@ async function saveConfig(){
   renderAdminBlackouts();
   loadHoursForm();
   renderFormatGrid();
-
-  const btn=document.querySelector('.save-btn');
-  const confirmEl=$('save-confirm');
-  btn.disabled=true; btn.textContent='Saving...';
-  try{
-    await saveConfigToServer();
-    confirmEl.textContent='✓ Saved';
-    confirmEl.style.color='';
-    confirmEl.classList.add('show');
-  }catch(err){
-    console.error('Save failed:', err);
-    confirmEl.textContent='⚠ Save failed — check connection and try again';
-    confirmEl.style.color='var(--red)';
-    confirmEl.classList.add('show');
-  }finally{
-    btn.disabled=false; btn.textContent='Save Changes';
-    setTimeout(()=>confirmEl.classList.remove('show'),4000);
-  }
-}
-
-// ── CONFIG LOADING (live backend) ───────────────────────────────
-// Fetches the real admin config (trade shows, blackouts, seasons, hours)
-// from the Azure Function + Table Storage backend. Falls back to the
-// hardcoded CFG defaults above if the request fails, so the page still
-// works (with stale data) if the backend is briefly unreachable.
-async function loadConfigFromServer(){
-  try{
-    const res = await fetch(API_BASE + '/config');
-    if(!res.ok) throw new Error('Config fetch failed: ' + res.status);
-    const data = await res.json();
-    // Only overwrite fields that are present in the response, keeping
-    // fallback defaults for anything the backend hasn't saved yet.
-    // Only accept trade show entries that have the fields the rest of the
-    // app depends on (dateHours, reps). A malformed record — e.g. leftover
-    // test data — is skipped rather than crashing renderFormatGrid/renderMCal.
-    if(data.tradeShows && Array.isArray(data.tradeShows)){
-      const validShows = data.tradeShows.filter(s => s && s.dateHours && typeof s.dateHours==='object' && Array.isArray(s.reps));
-      if(validShows.length === data.tradeShows.length){
-        CFG.tradeShows = validShows;
-      } else if(validShows.length > 0){
-        console.warn('Some trade show records were malformed and skipped.');
-        CFG.tradeShows = validShows;
-      }
-      // If none are valid, keep the existing fallback defaults rather than wiping to empty.
-    }
-    if(data.showroomWindows) CFG.showroomWindows = data.showroomWindows;
-    if(data.blackouts) CFG.blackouts = data.blackouts;
-    if(data.defaultHours) CFG.defaultHours = data.defaultHours;
-  }catch(err){
-    console.error('Could not load live config, using defaults:', err);
-  }
-}
-
-// Pushes the current CFG object to the backend so it persists and is
-// shared across everyone who opens the admin panel or booking page.
-async function saveConfigToServer(){
-  const res = await fetch(API_BASE + '/config', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({
-      tradeShows: CFG.tradeShows,
-      showroomWindows: CFG.showroomWindows,
-      blackouts: CFG.blackouts,
-      defaultHours: CFG.defaultHours
-    })
-  });
-  if(!res.ok) throw new Error('Config save failed: ' + res.status);
-  return res.json();
+  $('save-confirm').classList.add('show');
+  setTimeout(()=>$('save-confirm').classList.remove('show'),3000);
 }
 
 // ── INIT ──────────────────────────────────────────────────────
-(async function init(){
-  await loadConfigFromServer();
-  renderFormatGrid();
+renderFormatGrid();
 
-  // URL param admin trigger: ?admin opens admin panel automatically
-  if(new URLSearchParams(window.location.search).has('admin')){
-    openAdmin();
-  }
-})();
+// URL param admin trigger: ?admin opens admin panel automatically
+if(new URLSearchParams(window.location.search).has('admin')){
+  openAdmin();
+}
 </script>
 </body>
 </html>
