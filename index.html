@@ -1138,7 +1138,7 @@ function addShow(){
   $('ns-reps').querySelectorAll('input').forEach(c=>c.checked=false);
   renderAdminShows();renderFormatGrid();
 }
-function deleteShow(i){CFG.tradeShows.splice(i,1);renderAdminShows();renderFormatGrid()}
+function deleteShow(i){CFG.tradeShows.splice(i,1);persistCFG();renderAdminShows();renderFormatGrid()}
 
 // ── Showroom Windows ──────────────────────────────────────────
 function renderAdminSeasons(){
@@ -1156,9 +1156,9 @@ function addSeason(){
   if(!label||!start||!end){alert('Please fill in all fields.');return}
   CFG.showroomWindows.push({id:'sw'+Date.now(),label,start,end});
   $('nw-label').value='';$('nw-start').value='';$('nw-end').value='';
-  renderAdminSeasons();
+  persistCFG();renderAdminSeasons();
 }
-function deleteSeason(i){CFG.showroomWindows.splice(i,1);renderAdminSeasons()}
+function deleteSeason(i){CFG.showroomWindows.splice(i,1);persistCFG();renderAdminSeasons()}
 
 // ── Hours ─────────────────────────────────────────────────────
 function loadHoursForm(){
@@ -1187,9 +1187,9 @@ function addBlackout(){
   if(end<start){alert('End date must be on or after start date.');return}
   CFG.blackouts.push({id:'b'+Date.now(),start,end,label});
   $('nb-start').value='';$('nb-end').value='';$('nb-label').value='';
-  renderAdminBlackouts();
+  persistCFG();renderAdminBlackouts();
 }
-function deleteBlackout(i){CFG.blackouts.splice(i,1);renderAdminBlackouts()}
+function deleteBlackout(i){CFG.blackouts.splice(i,1);persistCFG();renderAdminBlackouts()}
 
 function saveConfig(){
   CFG.defaultHours={
@@ -1197,6 +1197,8 @@ function saveConfig(){
     lunchStart:$('h-lunch-start').value,lunchEnd:$('h-lunch-end').value,
     lunchEnabled:$('h-lunch-enabled').checked
   };
+  // Persist to localStorage so config survives page refreshes
+  try{ localStorage.setItem('tokulCFG', JSON.stringify(CFG)); }catch(e){}
   // Re-render all admin lists so changes are reflected immediately
   renderAdminShows();
   renderAdminSeasons();
@@ -1207,7 +1209,27 @@ function saveConfig(){
   setTimeout(()=>$('save-confirm').classList.remove('show'),3000);
 }
 
+// Also persist immediately when individual items are added/deleted
+// so you don't have to hit Save for every change
+function persistCFG(){
+  try{ localStorage.setItem('tokulCFG', JSON.stringify(CFG)); }catch(e){}
+}
+
 // ── INIT ──────────────────────────────────────────────────────
+// Load saved config from localStorage if available,
+// falling back to the hardcoded defaults above
+try{
+  const saved = localStorage.getItem('tokulCFG');
+  if(saved){
+    const parsed = JSON.parse(saved);
+    // Merge carefully — only overwrite fields present in the saved data
+    if(parsed.tradeShows) CFG.tradeShows = parsed.tradeShows;
+    if(parsed.showroomWindows) CFG.showroomWindows = parsed.showroomWindows;
+    if(parsed.blackouts) CFG.blackouts = parsed.blackouts;
+    if(parsed.defaultHours) CFG.defaultHours = parsed.defaultHours;
+  }
+}catch(e){}
+
 renderFormatGrid();
 
 // URL param admin trigger: ?admin opens admin panel automatically
