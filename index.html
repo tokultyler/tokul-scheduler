@@ -521,6 +521,44 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
 
 <script>
 // ══════════════════════════════════════════════════════════════
+// API
+// ══════════════════════════════════════════════════════════════
+const API_BASE = 'https://tokul-scheduler-func-a0a3bpdwhqethzep.westus-01.azurewebsites.net/api';
+
+// ── Config load/save via Azure backend ───────────────────────
+async function loadConfigFromServer(){
+  try{
+    const res = await fetch(API_BASE + '/config');
+    if(!res.ok) throw new Error('Config fetch failed: ' + res.status);
+    const data = await res.json();
+    if(data.tradeShows && Array.isArray(data.tradeShows)){
+      const validShows = data.tradeShows.filter(s=>s&&s.dateHours&&typeof s.dateHours==='object'&&Array.isArray(s.reps));
+      if(validShows.length>0) CFG.tradeShows = validShows;
+    }
+    if(data.showroomWindows) CFG.showroomWindows = data.showroomWindows;
+    if(data.blackouts) CFG.blackouts = data.blackouts;
+    if(data.defaultHours) CFG.defaultHours = data.defaultHours;
+  }catch(err){
+    console.error('Could not load live config, using defaults:', err);
+  }
+}
+
+async function saveConfigToServer(){
+  const res = await fetch(API_BASE + '/config', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      tradeShows: CFG.tradeShows,
+      showroomWindows: CFG.showroomWindows,
+      blackouts: CFG.blackouts,
+      defaultHours: CFG.defaultHours
+    })
+  });
+  if(!res.ok) throw new Error('Config save failed: ' + res.status);
+  return res.json();
+}
+
+// ══════════════════════════════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════════════════════════════
 let CFG = {
@@ -1223,22 +1261,38 @@ function addBlackout(){
 }
 function deleteBlackout(i){CFG.blackouts.splice(i,1);persistCFG();renderAdminBlackouts()}
 
-function saveConfig(){
+async function saveConfig(){
   CFG.defaultHours={
     open:$('h-open').value,close:$('h-close').value,
     lunchStart:$('h-lunch-start').value,lunchEnd:$('h-lunch-end').value,
     lunchEnabled:$('h-lunch-enabled').checked
   };
-  // Persist to localStorage so config survives page refreshes
-  try{ localStorage.setItem('tokulCFG', JSON.stringify(CFG)); }catch(e){}
-  // Re-render all admin lists so changes are reflected immediately
+  // Re-render admin UI immediately
   renderAdminShows();
   renderAdminSeasons();
   renderAdminBlackouts();
   loadHoursForm();
   renderFormatGrid();
-  $('save-confirm').classList.add('show');
-  setTimeout(()=>$('save-confirm').classList.remove('show'),3000);
+
+  const btn=document.querySelector('.save-btn');
+  const confirmEl=$('save-confirm');
+  btn.disabled=true; btn.textContent='Saving...';
+  try{
+    await saveConfigToServer();
+    // Also keep localStorage in sync as a fallback
+    try{ localStorage.setItem('tokulCFG', JSON.stringify(CFG)); }catch(e){}
+    confirmEl.textContent='✓ Saved';
+    confirmEl.style.color='';
+    confirmEl.classList.add('show');
+  }catch(err){
+    console.error('Save failed:', err);
+    confirmEl.textContent='⚠ Save failed — check connection';
+    confirmEl.style.color='var(--red)';
+    confirmEl.classList.add('show');
+  }finally{
+    btn.disabled=false; btn.textContent='Save Changes';
+    setTimeout(()=>confirmEl.classList.remove('show'),4000);
+  }
 }
 
 // Also persist immediately when individual items are added/deleted
@@ -1248,26 +1302,16 @@ function persistCFG(){
 }
 
 // ── INIT ──────────────────────────────────────────────────────
-// Load saved config from localStorage if available,
-// falling back to the hardcoded defaults above
-try{
-  const saved = localStorage.getItem('tokulCFG');
-  if(saved){
-    const parsed = JSON.parse(saved);
-    // Merge carefully — only overwrite fields present in the saved data
-    if(parsed.tradeShows) CFG.tradeShows = parsed.tradeShows;
-    if(parsed.showroomWindows) CFG.showroomWindows = parsed.showroomWindows;
-    if(parsed.blackouts) CFG.blackouts = parsed.blackouts;
-    if(parsed.defaultHours) CFG.defaultHours = parsed.defaultHours;
+(async function init(){
+  // 1. Try loading live config from Azure backend
+  await loadConfigFromServer();
+  // 2. Render the format grid with whatever config we have
+  renderFormatGrid();
+  // 3. URL param admin trigger: ?admin opens admin panel automatically
+  if(new URLSearchParams(window.location.search).has('admin')){
+    openAdmin();
   }
-}catch(e){}
-
-renderFormatGrid();
-
-// URL param admin trigger: ?admin opens admin panel automatically
-if(new URLSearchParams(window.location.search).has('admin')){
-  openAdmin();
-}
+})();
 </script>
 </body>
 </html>
