@@ -432,6 +432,18 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--char
                   <label class="rep-cb"><input type="checkbox" value="austin"> Austin</label>
                 </div>
               </div>
+              <div class="af-field" style="margin-top:10px"><label>Brands at This Show</label>
+                <div class="rep-checkboxes" id="ns-brands">
+                  <label class="rep-cb"><input type="checkbox" value="Chaco"> Chaco</label>
+                  <label class="rep-cb"><input type="checkbox" value="Eagle Creek"> Eagle Creek</label>
+                  <label class="rep-cb"><input type="checkbox" value="Exped"> Exped</label>
+                  <label class="rep-cb"><input type="checkbox" value="Faction &amp; Phaenom"> Faction &amp; Phaenom</label>
+                  <label class="rep-cb"><input type="checkbox" value="Merrell"> Merrell</label>
+                  <label class="rep-cb"><input type="checkbox" value="Outdoor Research"> Outdoor Research</label>
+                  <label class="rep-cb"><input type="checkbox" value="Toad &amp; Co"> Toad &amp; Co</label>
+                  <label class="rep-cb"><input type="checkbox" value="Western Mountaineering"> Western Mountaineering</label>
+                </div>
+              </div>
               <button class="add-row-btn" onclick="addShow()">+ Add Show</button>
             </div>
           </div>
@@ -515,10 +527,12 @@ let CFG = {
   tradeShows: [
     { id:'ts1', name:'WWSRA Bozeman', location:'Gallatin County Fairgrounds', timezone:'America/Denver',
       dateHours:{'2026-05-26':{open:'13:00',close:'19:00'},'2026-05-27':{open:'08:00',close:'19:00'},'2026-05-28':{open:'08:00',close:'16:00'}},
-      reps:['paul','pat'] },
+      reps:['paul','pat'],
+      brands:['Chaco','Exped','Merrell','Outdoor Research','Toad & Co','Western Mountaineering'] },
     { id:'ts2', name:'WWSRA Tacoma', location:'Greater Tacoma Convention Center', timezone:'America/Los_Angeles',
       dateHours:{'2026-06-01':{open:'08:00',close:'19:00'},'2026-06-02':{open:'08:00',close:'19:00'}},
-      reps:['paul','austin','tyler'] },
+      reps:['paul','austin','tyler'],
+      brands:['Chaco','Eagle Creek','Exped','Faction & Phaenom','Merrell','Outdoor Research','Toad & Co','Western Mountaineering'] },
   ],
   showroomWindows: [
     { id:'sw1', label:'Spring Preline 2026', start:'2026-05-01', end:'2026-06-30' },
@@ -762,9 +776,23 @@ function renderRepCards(ids){
 function setupBuilderForFormat(){
   const isVirtual=format==='virtual';
   const catField=$('cat-field');
-  // Virtual hides category, shows brand + duration only in 2 cols
   catField.style.display=isVirtual?'none':'';
   $('bf-full-row').className='bf-row '+(isVirtual?'cols2':'cols3');
+
+  // Rebuild brand dropdown filtered to show's brands if trade-show
+  const brandSel=$('b-brand');
+  const allBrands=Object.keys(BRANDS_FULL);
+  const allowedBrands = (format==='trade-show' && selectedShow?.brands?.length)
+    ? selectedShow.brands
+    : allBrands;
+
+  brandSel.innerHTML='<option value="">— Brand —</option>';
+  allBrands.forEach(b=>{
+    if(allowedBrands.includes(b)){
+      const o=document.createElement('option');o.value=b;o.textContent=b;brandSel.appendChild(o);
+    }
+  });
+
   resetBuilder();
 }
 
@@ -1113,8 +1141,9 @@ function renderAdminShows(){
       return MONS_S[parseInt(mo)-1]+' '+parseInt(day)+': '+fmt(h.open)+'–'+fmt(h.close);
     }).join(' · ');
     const tzLabel=show.timezone==='America/Denver'?'Mountain Time':show.timezone==='America/Los_Angeles'?'Pacific Time':show.timezone||'';
+    const brandNames=(show.brands||[]).join(', ')||'No brands specified';
     const div=document.createElement('div');div.className='config-item';
-    div.innerHTML=`<div class="config-item-body"><div class="ci-title">${show.name}</div><div class="ci-detail">${dateRange} · ${show.location} · ${tzLabel}</div><div class="ci-detail" style="margin-top:3px">${hoursStr}</div><div class="ci-reps">Attending: ${repNames}</div></div><button class="del-btn" onclick="deleteShow(${i})">Remove</button>`;
+    div.innerHTML=`<div class="config-item-body"><div class="ci-title">${show.name}</div><div class="ci-detail">${dateRange} · ${show.location} · ${tzLabel}</div><div class="ci-detail" style="margin-top:3px">${hoursStr}</div><div class="ci-reps">Attending: ${repNames}</div><div class="ci-detail" style="margin-top:3px;color:var(--olive-dark)">Brands: ${brandNames}</div></div><button class="del-btn" onclick="deleteShow(${i})">Remove</button>`;
     list.appendChild(div);
   });
 }
@@ -1123,7 +1152,9 @@ function addShow(){
   const start=$('ns-start').value,end=$('ns-end').value;
   const timezone=$('ns-tz').value;
   const reps=[...$('ns-reps').querySelectorAll('input:checked')].map(c=>c.value);
+  const brands=[...$('ns-brands').querySelectorAll('input:checked')].map(c=>c.value);
   if(!name||!start||!end||reps.length===0){alert('Please fill in all fields and select at least one rep.');return}
+  if(brands.length===0){alert('Please select at least one brand for this show.');return}
   const dateHours={};
   let cur=new Date(start+'T12:00:00');
   const endDate=new Date(end+'T12:00:00');
@@ -1132,10 +1163,11 @@ function addShow(){
     dateHours[d]={open:$('sh-open-'+d)?.value||'09:00',close:$('sh-close-'+d)?.value||'17:00'};
     cur.setDate(cur.getDate()+1);
   }
-  CFG.tradeShows.push({id:'ts'+Date.now(),name,location:loc,timezone,dateHours,reps});
+  CFG.tradeShows.push({id:'ts'+Date.now(),name,location:loc,timezone,dateHours,reps,brands});
   $('ns-name').value='';$('ns-loc').value='';$('ns-start').value='';$('ns-end').value='';
   $('ns-date-hours').style.display='none';$('ns-date-hours-rows').innerHTML='';
   $('ns-reps').querySelectorAll('input').forEach(c=>c.checked=false);
+  $('ns-brands').querySelectorAll('input').forEach(c=>c.checked=false);
   renderAdminShows();renderFormatGrid();
 }
 function deleteShow(i){CFG.tradeShows.splice(i,1);persistCFG();renderAdminShows();renderFormatGrid()}
