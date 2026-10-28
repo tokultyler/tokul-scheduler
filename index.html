@@ -957,19 +957,48 @@ function getEventTimezone(){
 // Cache of live availability fetches keyed by "rep|date"
 const availabilityCache={};
 
+// Returns the UTC offset in minutes for an IANA timezone on a specific date (DST-aware)
+function getUtcOffsetMins(dateStr, timeZone){
+  const probe=new Date(dateStr+'T12:00:00Z');
+  const utcStr=probe.toLocaleString('en-US',{timeZone:'UTC'});
+  const tzStr=probe.toLocaleString('en-US',{timeZone});
+  return Math.round((new Date(tzStr)-new Date(utcStr))/60000);
+}
+
+// Shifts a "HH:MM" time string by offsetMins, clamped to 00:00–23:59
+function shiftTime(t, offsetMins){
+  const total=toMins(t)+offsetMins;
+  const clamped=Math.max(0,Math.min(1439,total));
+  return String(Math.floor(clamped/60)).padStart(2,'0')+':'+String(clamped%60).padStart(2,'0');
+}
+
 async function fetchLiveBusyIntervals(repKey, dateStr){
   const cacheKey=repKey+'|'+dateStr;
   if(availabilityCache[cacheKey]) return availabilityCache[cacheKey];
   const res=await fetch(API_BASE+'/availability?rep='+encodeURIComponent(repKey)+'&date='+encodeURIComponent(dateStr));
   if(!res.ok) throw new Error('Availability fetch failed: '+res.status);
   const data=await res.json();
+
+  // API returns times in the rep's own timezone (America/Denver for Pat).
+  // Scheduler displays slots in the event timezone (show TZ or rep TZ).
+  // Convert interval times from rep TZ to event TZ so conflict checking
+  // lines up with the displayed slot times.
+  // e.g. Pat (MT, UTC-7 in winter) at Tacoma show (PT, UTC-8 in winter):
+  //   repOffset=-420, eventOffset=-480, shift=-60 → 12:00 MT becomes 11:00 PT ✓
+  const repTz=ALL_REPS[repKey]?.timezone||'America/Los_Angeles';
+  const{tz:eventTz}=getEventTimezone();
+  const repOffsetMins=getUtcOffsetMins(dateStr, repTz);
+  const eventOffsetMins=getUtcOffsetMins(dateStr, eventTz);
+  const shiftMins=eventOffsetMins-repOffsetMins;
+
   const intervals=(data.busy||[]).map(block=>{
-    const startTime=block.start.slice(11,16);
-    const startMins=toMins(startTime);
-    const endMins=toMins(block.end.slice(11,16));
+    const rawStart=block.start.slice(11,16);
+    const rawEnd=block.end.slice(11,16);
+    const startTime=shiftMins!==0 ? shiftTime(rawStart, shiftMins) : rawStart;
+    const endTime=shiftMins!==0 ? shiftTime(rawEnd, shiftMins) : rawEnd;
     return{
       time:startTime,
-      duration:Math.max(endMins-startMins,0),
+      duration:Math.max(toMins(endTime)-toMins(startTime), 0),
       brand:block.brand||null,
       category:block.category||null,
       subject:block.subject||'Unavailable'
