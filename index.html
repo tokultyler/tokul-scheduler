@@ -1035,39 +1035,35 @@ function renderTimePicker(dateStr, liveIntervals){
     }
 
     // Check live calendar intervals for conflicts
-    let realConflictLabel=null, realIsStack=false;
+    let isFull=false, realConflictLabel=null, realIsStack=false;
     for(const iv of intervals){
+      if(!overlaps(t,bDur,iv.time,iv.duration)) continue;
       if(iv.brand===null){
-        // Untagged event (personal meeting etc) — always fully blocks
-        if(overlaps(t,bDur,iv.time,iv.duration)){
-          realConflictLabel=iv.subject||'Unavailable';
-          break;
-        }
-        continue;
+        // Untagged event (personal meeting, OOO etc) — always fully blocks
+        isFull=true;
+        break;
       }
-      if(overlaps(t,bDur,iv.time,iv.duration)){
-        const ivKey=conflictKey(iv.brand,iv.category);
-        if(ivKey!==myKey){
-          realConflictLabel=iv.brand===bBrand?iv.brand+' '+iv.category:iv.brand;
-          break;
-        } else {
-          realIsStack=true;
-        }
+      const ivKey=conflictKey(iv.brand,iv.category);
+      if(ivKey!==myKey){
+        realConflictLabel=iv.brand===bBrand?iv.brand+' '+iv.category:iv.brand;
+        break;
+      } else {
+        realIsStack=true;
       }
     }
 
     let sessConflictLabel=null, sessIsStack=false;
-    for(const a of appointments){
-      if(a.date!==dateStr)continue;
-      if(overlaps(t,bDur,a.time,a.duration)){
-        const aKey=conflictKey(a.brand, a.category);
-        if(aKey!==myKey){
-          sessConflictLabel = a.brand===bBrand
-            ? a.brand+' '+a.category
-            : a.brand;
-          break;
-        } else {
-          sessIsStack=true;
+    if(!isFull){
+      for(const a of appointments){
+        if(a.date!==dateStr) continue;
+        if(overlaps(t,bDur,a.time,a.duration)){
+          const aKey=conflictKey(a.brand,a.category);
+          if(aKey!==myKey){
+            sessConflictLabel=a.brand===bBrand?a.brand+' '+a.category:a.brand;
+            break;
+          } else {
+            sessIsStack=true;
+          }
         }
       }
     }
