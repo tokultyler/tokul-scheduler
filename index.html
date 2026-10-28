@@ -867,6 +867,17 @@ function onDur(){
   bDur=$('b-dur').value?parseInt($('b-dur').value):null; bDate=null; bTime=null;
   $('tpick').style.display='none'; $('add-btn').disabled=true;
   if(!bDur){$('mcal').style.display='none';return}
+  // Default calendar to trade show month, or current month for showroom/virtual
+  if(format==='trade-show'&&selectedShow){
+    const firstDate=Object.keys(selectedShow.dateHours).sort()[0];
+    if(firstDate){
+      const[y,mo]=firstDate.split('-');
+      calMonth=new Date(parseInt(y),parseInt(mo)-1,1);
+    }
+  } else {
+    const now=new Date();
+    calMonth=new Date(now.getFullYear(),now.getMonth(),1);
+  }
   $('mcal').style.display='block'; renderMCal();
 }
 
@@ -943,14 +954,47 @@ function getEventTimezone(){
   return{tz, label: tz==='America/Denver'?'Mountain Time (MT)':'Pacific Time (PT)'};
 }
 
-function pickDate(dateStr,el){
+// Cache of live availability fetches keyed by "rep|date"
+const availabilityCache={};
+
+async function fetchLiveBusyIntervals(repKey, dateStr){
+  const cacheKey=repKey+'|'+dateStr;
+  if(availabilityCache[cacheKey]) return availabilityCache[cacheKey];
+  const res=await fetch(API_BASE+'/availability?rep='+encodeURIComponent(repKey)+'&date='+encodeURIComponent(dateStr));
+  if(!res.ok) throw new Error('Availability fetch failed: '+res.status);
+  const data=await res.json();
+  const intervals=(data.busy||[]).map(block=>{
+    const startTime=block.start.slice(11,16);
+    const startMins=toMins(startTime);
+    const endMins=toMins(block.end.slice(11,16));
+    return{
+      time:startTime,
+      duration:Math.max(endMins-startMins,0),
+      brand:block.brand||null,
+      category:block.category||null,
+      subject:block.subject||'Unavailable'
+    };
+  });
+  availabilityCache[cacheKey]=intervals;
+  return intervals;
+}
+
+async function pickDate(dateStr,el){
   document.querySelectorAll('.mc-day').forEach(d=>d.classList.remove('mc-sel'));
   el.classList.add('mc-sel'); bDate=dateStr; bTime=null; $('add-btn').disabled=true;
   const[y,mo,d]=dateStr.split('-');
   $('tp-date').textContent=MONS_S[parseInt(mo)-1]+' '+parseInt(d)+', '+y;
   const{label}=getEventTimezone();
   $('tp-tz-text').textContent='Times shown in '+label;
-  renderTimePicker(dateStr); $('tpick').style.display='block';
+  $('tpick').style.display='block';
+  $('tp-grid').innerHTML='<div class="no-slots">Checking availability...</div>';
+  try{
+    const liveIntervals=await fetchLiveBusyIntervals(rep,dateStr);
+    renderTimePicker(dateStr,liveIntervals);
+  }catch(err){
+    console.error('Could not load live availability:',err);
+    $('tp-grid').innerHTML='<div class="no-slots">Could not load availability — please try again.</div>';
+  }
 }
 
 // ── TIME PICKER ───────────────────────────────────────────────
@@ -969,14 +1013,14 @@ function getCloseTimeForDate(dateStr){
   return CFG.defaultHours.close;
 }
 
-function renderTimePicker(dateStr){
+function renderTimePicker(dateStr, liveIntervals){
   const grid=$('tp-grid'); grid.innerHTML='';
   const slots=getSlotsForDate(dateStr);
   if(slots.length===0){
     grid.innerHTML='<div class="no-slots">No available slots for this date.</div>'; return;
   }
   const closeTime=getCloseTimeForDate(dateStr);
-  const repBooked=((BOOKED[rep]||{})[dateStr])||{};
+  const intervals=liveIntervals||[];
   const myKey=currentKey();
 
   slots.forEach(t=>{
@@ -990,28 +1034,25 @@ function renderTimePicker(dateStr){
       return;
     }
 
-    const existing=repBooked[t]||[];
-    const isFull=existing.includes('FULL');
-
+    // Check live calendar intervals for conflicts
     let realConflictLabel=null, realIsStack=false;
-    if(!isFull){
-      for(const[bt,entries] of Object.entries(repBooked)){
-        if(entries.includes('FULL'))continue;
-        if(overlaps(t,bDur,bt,30)){
-          for(const e of entries){
-            const eKey=conflictKey(e.brand, e.category);
-            if(eKey!==myKey){
-              // Different brand or same brand different category — conflict
-              realConflictLabel = e.brand===bBrand
-                ? e.brand+' '+e.category  // same brand, diff cat: show category
-                : e.brand;                // diff brand: show brand name
-              break;
-            } else {
-              realIsStack=true;           // exact same brand+category — stack OK
-            }
-          }
+    for(const iv of intervals){
+      if(iv.brand===null){
+        // Untagged event (personal meeting etc) — always fully blocks
+        if(overlaps(t,bDur,iv.time,iv.duration)){
+          realConflictLabel=iv.subject||'Unavailable';
+          break;
         }
-        if(realConflictLabel)break;
+        continue;
+      }
+      if(overlaps(t,bDur,iv.time,iv.duration)){
+        const ivKey=conflictKey(iv.brand,iv.category);
+        if(ivKey!==myKey){
+          realConflictLabel=iv.brand===bBrand?iv.brand+' '+iv.category:iv.brand;
+          break;
+        } else {
+          realIsStack=true;
+        }
       }
     }
 
@@ -1099,21 +1140,94 @@ function updateSummary(){
 }
 
 // ── SUBMIT ────────────────────────────────────────────────────
-function submitBooking(){
+function addMins(t,mins){const[h,m]=t.split(':');const total=parseInt(h)*60+parseInt(m)+mins;return String(Math.floor(total/60)).padStart(2,'0')+':'+String(total%60).padStart(2,'0')}
+
+async function createBookingOnServer(appt, contact){
+  const{tz}=getEventTimezone();
+  const endTime=addMins(appt.time, appt.duration);
+  const res=await fetch(API_BASE+'/booking',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      rep:rep,
+      start:appt.date+'T'+appt.time+':00',
+      end:appt.date+'T'+endTime+':00',
+      retailerName:contact.store,
+      retailerEmail:contact.email,
+      brand:appt.brand,
+      category:appt.category,
+      timezone:tz,
+      format:appt.brand+' — '+appt.category,
+      location:format==='trade-show'?(selectedShow?.location||''):format==='showroom'?'Tokul Creek Showroom':'Virtual / Phone',
+      notes:(contact.notes||'')+(contact.first?' | Booked by: '+contact.first+' '+contact.last:'')
+    })
+  });
+  if(!res.ok) throw new Error('Booking failed for '+appt.brand+' ('+res.status+')');
+  return res.json();
+}
+
+async function verifyBookingWasCreated(appt){
+  try{
+    const cacheKey=rep+'|'+appt.date;
+    delete availabilityCache[cacheKey];
+    const liveIntervals=await fetchLiveBusyIntervals(rep,appt.date);
+    return liveIntervals.some(iv=>
+      iv.time===appt.time&&
+      iv.brand===appt.brand&&
+      (format==='virtual'||iv.category===appt.category)
+    );
+  }catch(err){
+    console.error('Could not verify booking status after failure:',err);
+    return false;
+  }
+}
+
+async function submitBooking(){
   const first=$('f-first').value.trim(),last=$('f-last').value.trim();
   const email=$('f-email').value.trim(),store=$('f-store').value.trim();
   if(!first||!last||!email||!store){$('err-contact').classList.add('show');return}
+
+  const contact={first,last,email,store,notes:$('f-notes').value.trim()};
+  const submitBtn=document.querySelector('#step-4 .btn-next');
+  submitBtn.disabled=true; submitBtn.textContent='Booking...';
+  $('err-contact').classList.remove('show');
+
+  const failures=[];
+  for(const appt of appointments){
+    try{
+      await createBookingOnServer(appt,contact);
+    }catch(err){
+      console.error(err);
+      const actuallyBooked=await verifyBookingWasCreated(appt);
+      if(!actuallyBooked){
+        failures.push(appt.brand+' '+appt.category);
+      }
+    }
+  }
+
+  submitBtn.disabled=false; submitBtn.textContent='Confirm Booking ✓';
+
+  if(failures.length===appointments.length){
+    $('err-contact').textContent='Could not create bookings — please check your connection and try again.';
+    $('err-contact').classList.add('show');
+    return;
+  }
+
+  // Show success screen
   document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
   $('success-screen').classList.add('show');
   document.querySelectorAll('.step-pill').forEach(p=>{p.classList.remove('active');p.classList.add('done')});
   $('conf-email').textContent=email;
   const listEl=$('suc-list');
   const fmtLabel=format==='trade-show'?'Trade Show — '+(selectedShow?.name||''):format==='showroom'?'Showroom':'Virtual / Phone';
-  listEl.innerHTML=`<div style="font-size:.71rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--bark);margin-bottom:8px">With ${ALL_REPS[rep]?.name} · ${fmtLabel}</div>`;
+  listEl.innerHTML=`<div style="font-size:.71rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px">With ${ALL_REPS[rep]?.name} · ${fmtLabel}</div>`;
+  if(failures.length>0){
+    listEl.innerHTML+=`<div style="font-size:.75rem;color:var(--red);margin-bottom:10px">⚠ ${failures.length} appointment(s) could not be booked: ${failures.join(', ')}. Please contact your rep directly.</div>`;
+  }
   [...appointments].sort((a,b)=>a.date!==b.date?(a.date<b.date?-1:1):(a.time<b.time?-1:1)).forEach(a=>{
     const[y,mo,d]=a.date.split('-');
     const item=document.createElement('div');item.className='suc-appt';
-    item.innerHTML=`<strong style="color:var(--pine)">${a.brand}</strong> — ${a.category} <span style="color:var(--bark)">(${a.duration} min)</span><br><span style="font-size:.72rem;color:var(--bark)">${MONS_L[parseInt(mo)-1]} ${parseInt(d)}, ${y} at ${fmt(a.time)}</span>`;
+    item.innerHTML=`<strong style="color:var(--olive-dark)">${a.brand}</strong> — ${a.category} <span style="color:var(--muted)">(${a.duration} min)</span><br><span style="font-size:.72rem;color:var(--muted)">${MONS_L[parseInt(mo)-1]} ${parseInt(d)}, ${y} at ${fmt(a.time)}</span>`;
     listEl.appendChild(item);
   });
 }
